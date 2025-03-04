@@ -1,0 +1,5 @@
+{
+  "typescript.validate.ignore": [
+    "**/node_modules/expo-location/**"
+  ]
+}

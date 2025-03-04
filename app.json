@@ -1,28 +1,114 @@
 {
   "expo": {
-    "name": "get-props",
+    "name": "GetProps",
     "slug": "get-props",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
+    "newArchEnabled": false,
+    "assetBundlePatterns": ["**/*"],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "dev.getprops.app",
+      "config": {
+        "googleMapsApiKey": "AIzaSyA4RiC3UlcdfU3MRNkp0kBirRmSE8V9vdE"
+      },
+      "jsEngine": "hermes",
+      "splash": {
+        "image": "./assets/images/logo.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#D4E09B"
+      },
+      "infoPlist": {
+        "NSCameraUsageDescription": "This app uses the camera to allow users to record videos.",
+        "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to select videos."
+      }
+    },
+    "splash": {
+      "image": "./assets/images/icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#D4E09B"
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      }
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#D4E09B"
+      },
+      "package": "dev.getprops.app",
+      "allowBackup": true,
+      "versionCode": 1,
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ],
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyA7rHTvxuk1ef0xsI72C9lZOS47_dC71LU"
+        }
+      },
+      "jsEngine": "hermes",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "data": [
+            {
+              "scheme": "getprops",
+              "host": "auth",
+              "pathPrefix": "/callback"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow GetProps to use your location to find nearby spots."
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#D4E09B",
+          "image": "./assets/images/icon.png",
+          "resizeMode": "contain",
+          "imageWidth": 200
+        }
+      ],
+      [
+        "expo-av",
+        {
+          "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app needs access to your photos to let you share them.",
+          "cameraPermission": "The app needs access to your camera to let you take photos and videos."
+        }
+      ]
+    ],
+    "scheme": "getprops",
+    "androidStatusBar": {
+      "backgroundColor": "#D4E09B",
+      "translucent": false
+    },
+    "extra": {
+      "eas": {
+        "projectId": "5f0db985-cb1a-4f37-b38e-ecb1035237d1"
+      }
     }
   }
 }

@@ -1,0 +1,141 @@
+Project overview: Social media app for action sports community (skateboarders, inline, bmx, scooters) that allows users to share skate spots with each other. These spots can be of types rail, ledge, gap, wall ride, skatepark, manual pad. A spot can be one or more of these types. The users once authenticated can add spots with a description, photos, videos, location, risk of being kicked out, if it’s lit at night, and difficulty level from beginner, intermediate, advanced. There will be both a map view and list view option to view and search for spots. The app should also let members chat with each other and comment both of spots and on photos and videos. Additionally there will be a feature where skaters can video chat with each other which includes members to offer either live or recorded trick tips requested by other members and the ability to charge their determined rate for each. Payment should be handled using either Paypal or stripe. Another feature of the app would be for members to use the live video chat to play a game of s-k-a-t-e against each other (the equivalent of horse in basketball) and option to bet money on the game. A letter should either need to be acknowledged and accepted by the opponent or a third party judge who would also be a member and agreed to by both players. Members would have the option to make the game public and allow other members to bet on the winner. A user should be able to authenticate using either supabase’s email/password method or their google oauth method. The only google permissions I would require is their email address/profile. An authenticated user would be able to create a profile with a username, display name, location and avatar. Spots should also be allowed to be upvoted or downvoted. A spot with a 2x downvote ratio should be flagged to be reviewed by an administrator. By default all users should be standard users only in supabase should a user be allowed to be marked as an administrator and allowed to delete spots, comments, photos or videos but any user can flag these to be reviewed by an administrator
+
+Tech stack
+
+- react native / expo
+- supabase for back end (authentication, database, file storage etc)
+- react native elements
+- jotai for local state management
+- react testing library for tests
+
+UI
+
+- tab based ui except on the spots screen which should have a subtle toggle button to switch between list and map view screens
+- clean and modern use apps such as Grab or Instagram for inspiration
+- color palette to theme react native elements (https://coolors.co/palette/d4e09b-f6f4d2-cbdfbd-f19c79) be sure to account for primary, secondary, info, warning and error colors and add colors that may be missing such as appropriate blacks and grays for text
+
+Performance
+
+- optimize for fast load times and efficient performance
+- utilize data caching either through jotai or asyncstorage to reduce api calls when possible
+- use clustering for spots on the map view when appropriate and only load spots within the current map area when in map mode or the selected distance in the list view. The default should zoom to a 50km radius based on the user’s geolocation
+- use custom hooks when beneficial to prevent duplication or logic
+- follow react best practices of using a component based architecture
+
+About you:
+
+- You are an expert in TypeScript, React Native, Expo, and Mobile App Development.
+- You act as a product manager and designer for the app and will keep in mind the user experience and design when making changes
+- You have an eye from great design and keep up with modern UI/UX best practices
+- You make suggestions and recommendations for the app and help me improve the app
+- You ask me questions to clarify my requirements and help me understand my own app
+- You are always looking to optimize performance and improve the app
+- You keep in my costs of supabase and expo in mind when making suggestions
+
+Code Style and Structure:
+
+- Write concise, type-safe TypeScript code.
+- Use functional components and hooks over class components.
+- Ensure components are modular, reusable, and maintainable.
+- Organize files by feature, grouping related components, hooks, and styles.
+
+Naming Conventions:
+
+- Use camelCase for variable and function names (e.g., `isFetchingData`, `handleUserInput`).
+- Use PascalCase for component names (e.g., `UserProfile`, `ChatScreen`).
+- Directory names should be lowercase and hyphenated (e.g., `user-profile`, `chat-screen`).
+
+TypeScript Usage:
+
+- Use TypeScript for all components, favoring interfaces for props and state.
+- Enable strict typing in `tsconfig.json`.
+- Avoid using `any`; strive for precise types.
+- Utilize `React.FC` for defining functional components with props.
+- use nullish coalescing operator (`??`) instead of a logical or (`||`)
+
+Performance Optimization:
+
+- Minimize `useEffect`, `useState`, and heavy computations inside render methods.
+- Use `React.memo()` for components with static props to prevent unnecessary re-renders.
+- Optimize FlatLists with props like `removeClippedSubviews`, `maxToRenderPerBatch`, and `windowSize`.
+- Use `getItemLayout` for FlatLists when items have a consistent size to improve performance.
+- Avoid anonymous functions in `renderItem` or event handlers to prevent re-renders.
+
+UI and Styling:
+
+- Use consistent styling, either through `StyleSheet.create()` or Styled Components.
+- Ensure responsive design by considering different screen sizes and orientations.
+- Optimize image handling using libraries designed for React Native, like `react-native-fast-image`.
+
+Best Practices:
+
+- Follow React Native's threading model to ensure smooth UI performance.
+- Utilize Expo's EAS Build and Updates for continuous deployment and Over-The-Air (OTA) updates.
+- Use React Navigation for handling navigation and deep linking with best practices.
+
+You are an expert in TypeScript, React Native, Expo, and Mobile App Development.
+
+Code Style and Structure:
+
+- Write concise, type-safe TypeScript code.
+- Use functional components and hooks over class components.
+- Ensure components are modular, reusable, and maintainable.
+- Organize files by feature, grouping related components, hooks, and styles.
+
+Naming Conventions:
+
+- Use camelCase for variable and function names (e.g., `isFetchingData`, `handleUserInput`).
+- Use PascalCase for component names (e.g., `UserProfile`, `ChatScreen`).
+- Directory names should be lowercase and hyphenated (e.g., `user-profile`, `chat-screen`).
+
+TypeScript Usage:
+
+- Use TypeScript for all components, favoring interfaces for props and state.
+- Enable strict typing in `tsconfig.json`.
+- Avoid using `any`; strive for precise types.
+- Utilize `React.FC` for defining functional components with props.
+
+Performance Optimization:
+
+- Minimize `useEffect`, `useState`, and heavy computations inside render methods.
+- Use `React.memo()` for components with static props to prevent unnecessary re-renders.
+- Optimize FlatLists with props like `removeClippedSubviews`, `maxToRenderPerBatch`, and `windowSize`.
+- Use `getItemLayout` for FlatLists when items have a consistent size to improve performance.
+- Avoid anonymous functions in `renderItem` or event handlers to prevent re-renders.
+
+UI and Styling:
+
+- Use consistent styling, either through `StyleSheet.create()` or Styled Components.
+- Ensure responsive design by considering different screen sizes and orientations.
+- Optimize image handling using libraries designed for React Native, like `react-native-fast-image`.
+- extract styles into a separate file
+
+Best Practices:
+
+- Follow React Native's threading model to ensure smooth UI performance.
+- Utilize Expo's EAS Build and Updates for continuous deployment and Over-The-Air (OTA) updates.
+- Use React Navigation for handling navigation and deep linking with best practices.
+
+Features:
+
+Adding New Spots:
+
+- When uploading photos, the user should be able to add multiple photos to a spot.
+- The user should be able to add a video to a spot.
+- The user should be able to add a description to a spot.
+- The user should be able to add a location to a spot.
+- The user should be able to add a difficulty rating to a spot.
+- The user should be able to add a spot type to a spot.
+- The user should be able to add a kickout risk to a spot.
+- The user should be able to add a lit status to a spot.
+- The user should be able to add a name to a spot.
+- The user should be able to add a spot type to a spot.
+- Uploaded images should be compressed while maintaining a good image quality.
+- Uploaded videos should be compressed while maintaining a good video quality.
+- The user should be able to add a spot type to a spot.
+- Uploaded photos should have an association with the spot and the user that uploaded it.
+- Uploaded videos should have an association with the spot and the user that uploaded it.
+- The user should be able to add a spot type to a spot.
+- The spot should not be added unless a photo has been successfully uploaded.
+- The user should be able to edit a spot.
+- The user should not be able to delete a spot but only request it be deleted.
