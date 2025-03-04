@@ -132,7 +132,7 @@ This sprint focuses on optimizing media handling in our skate spot app, improvin
 - **Impact**: Users cannot create new spots
 - **Tasks**:
   - [x] Audit database schema for spots table
-  - [ ] Add missing postal_code column or remove requirement
+  - [x] Add missing postal_code column or remove requirement
   - [ ] Update spot creation form validation
   - [ ] Test spot creation flow end-to-end
 

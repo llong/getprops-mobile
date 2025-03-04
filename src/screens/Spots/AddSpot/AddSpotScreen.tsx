@@ -251,8 +251,7 @@ export const AddSpotScreen = ({ route }: AddSpotScreenProps) => {
             : null,
           city: formData.city ?? null,
           country: formData.country ?? null,
-          // postal_code field removed until migration is applied
-          // postal_code: formData.postalCode ?? null,
+          postal_code: formData.postalCode ?? null,
         },
       ])
       .select();
