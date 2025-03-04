@@ -80,3 +80,6 @@ yarn-error.*
 
 # Markdown files
 projectStatus.md
+
+# DMG files
+*.dmg
