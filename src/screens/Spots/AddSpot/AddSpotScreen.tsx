@@ -251,6 +251,7 @@ export const AddSpotScreen = ({ route }: AddSpotScreenProps) => {
             : null,
           city: formData.city ?? null,
           country: formData.country ?? null,
+          postal_code: formData.postalCode ?? null,
         },
       ])
       .select();
