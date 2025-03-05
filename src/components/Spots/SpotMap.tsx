@@ -46,7 +46,7 @@ export const SpotMap: React.FC<SpotMapProps> = memo(
         city?: string;
         region?: string;
         country?: string;
-        postal_code?: string;
+        postalCode?: string;
       };
     } | null>(null);
     const [selectedSpot, setSelectedSpot] = useState<ISpot | null>(null);
@@ -253,7 +253,7 @@ export const SpotMap: React.FC<SpotMapProps> = memo(
               city: address.city ?? undefined,
               region: address.region ?? undefined,
               country: address.country ?? undefined,
-              postal_code: address.postalCode ?? undefined,
+              postalCode: address.postalCode ?? undefined,
             },
           });
           setIsAddingSpot(true);

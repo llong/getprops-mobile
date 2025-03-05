@@ -77,15 +77,14 @@ export const useSpotVideos = () => {
 
       // Save to spot_videos table with new fields
       const { error: dbError } = await supabase.from("spot_videos").insert({
-        spot_id: spotId,
-        user_id: user.id,
+        spotId: spotId,
+        userId: user.id,
         url: videoUrl,
-        thumbnail_url: thumbnailUrl,
+        thumbnailUrl: thumbnailUrl,
         duration: Math.round(video.duration ?? 0),
-        file_size: video.fileSize,
         width: video.width,
         height: video.height,
-        created_at: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
       });
 
       if (dbError) throw dbError;

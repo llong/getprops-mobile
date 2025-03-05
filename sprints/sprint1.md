@@ -133,8 +133,8 @@ This sprint focuses on optimizing media handling in our skate spot app, improvin
 - **Tasks**:
   - [x] Audit database schema for spots table
   - [x] Add missing postal_code column or remove requirement
-  - [ ] Update spot creation form validation
-  - [ ] Test spot creation flow end-to-end
+  - [x] Update spot creation form validation
+  - [x] Test spot creation flow end-to-end
 
 ### 4. User Profile Database & Navigation [HIGH]
 
