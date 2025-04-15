@@ -67,13 +67,15 @@ export const SpotsScreen = React.memo(() => {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={[styles.header, { paddingTop: insets.top }]}>
-        <SearchInput
-          ref={searchInputRef}
-          placeholder="Search spots..."
-          onSearch={handleSearch}
-          onFocus={handleSearchFocus}
-          onDismiss={handleSearchDismiss}
-        />
+        <View style={styles.searchContainer}>
+          <SearchInput
+            ref={searchInputRef}
+            placeholder="Search spots..."
+            onSearch={handleSearch}
+            onFocus={handleSearchFocus}
+            onDismiss={handleSearchDismiss}
+          />
+        </View>
 
         <SpotViewToggle
           isMapView={viewMode === "map"}
@@ -151,9 +153,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: 10,
   },
-  toggleContainer: {
-    width: 80, // Fixed width for toggle
-  },
+  // toggleContainer removed as it's unused
   content: {
     flex: 1,
     marginTop: 60, // Adjust based on header height
