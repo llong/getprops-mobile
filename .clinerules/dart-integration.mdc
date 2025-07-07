@@ -1,0 +1,40 @@
+# Dart Integration Rules
+
+This document outlines the rules and conventions for integrating with the Dart task management system for this project.
+
+## Core Principles
+
+- **Single Source of Truth:** Dart is the single source of truth for all project tasks, bugs, features, and sprints.
+- **Task-Branch-Commit:** Every significant piece of work should be associated with a Dart task. Git branches and commits should reference the corresponding Dart Task ID.
+
+## Workflow
+
+1.  **Task Creation:**
+    - New tasks, features, or bugs will be identified and discussed.
+    - Before starting work, a corresponding task should be created in Dart using the `create_task` tool.
+    - Tasks should be assigned to the appropriate `dartboard`, typically **"General/Tasks"**.
+    - The task `title` should be clear and concise.
+    - The `description` should include a detailed explanation of the task, acceptance criteria, and any relevant context.
+    - The appropriate `type` (e.g., "Task", "Bug", "Feature") and `priority` should be set.
+    - Relevant `tags` from the available list should be applied to categorize the work (e.g., "UI", "Backend", "Bug").
+
+2.  **Working on a Task:**
+    - When starting a task, a new git branch should be created. The branch name should follow the convention: `[type]/[TASK_ID]-[short-description]`. For example: `feature/TASK-123-add-video-upload`.
+    - The task in Dart should be moved to the **"Doing"** status.
+    - All commits related to the task should reference the task ID in the commit message (e.g., `feat(video): Add compression to upload flow (TASK-123)`).
+
+3.  **Completing a Task:**
+    - Once the work is complete and tested, the corresponding Dart task should be updated using the `update_task` tool.
+    - The task status should be moved to **"Done"**.
+    - A comment may be added to the task using `add_task_comment` with a summary of the changes and a link to the pull request if applicable.
+
+## Available Dart Configuration
+
+-   **User:** Lewis Long (director@getprops.my)
+-   **Dartboards:** `General/Tasks`, `Personal/Tutorial tasks`
+-   **Folders:** `Personal/Getting started`, `General/Docs`
+-   **Task Types:** `Task`, `Subtask`, `Project`, `Milestone`
+-   **Statuses:** `To-do`, `Doing`, `Done`
+-   **Assignees:** `Dart AI`, `Lewis Long`
+-   **Priorities:** `critical`, `high`, `medium`, `low`
+-   **Tags:** (A comprehensive list of tags is available, including `Bug`, `Feature`, `UI`, `UX`, `Backend`, `Refactor`, etc.)

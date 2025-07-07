@@ -1,93 +1,103 @@
 import { useState } from "react";
 import { supabase } from "@/utils/supabase";
-import * as VideoThumbnails from "expo-video-thumbnails";
-import * as ImageManipulator from "expo-image-manipulator";
+import * as FileSystem from "expo-file-system";
 import { v4 as uuidv4 } from "uuid";
 import { useAuth } from "./useAuth";
 import { VideoAsset } from "@/types/media";
 
+export type VideoUploadResult = {
+  url: string;
+  thumbnailUrl: string;
+  duration: number | undefined;
+  width: number;
+  height: number;
+  fileSize: number | undefined;
+  created_at: string;
+};
+
 export const useSpotVideos = () => {
   const { user } = useAuth();
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{
+    [key: string]: number;
+  }>({});
 
-  const generateThumbnail = async (videoUri: string) => {
-    try {
-      const { uri } = await VideoThumbnails.getThumbnailAsync(videoUri, {
-        time: 0,
-      });
-      const manipResult = await ImageManipulator.manipulateAsync(
-        uri,
-        [{ resize: { width: 300 } }],
-        {
-          compress: 0.7,
-          format: ImageManipulator.SaveFormat.JPEG,
-          base64: true,
-        }
-      );
-      return manipResult.base64;
-    } catch (e) {
-      console.warn("Error generating thumbnail:", e);
-      return null;
-    }
-  };
-
-  const uploadVideo = async (video: VideoAsset, spotId: string) => {
+  const uploadVideo = async (
+    video: VideoAsset,
+    spotId: string,
+    onProgress?: (progress: number) => void
+  ): Promise<VideoUploadResult> => {
     if (!user) throw new Error("Must be authenticated to upload videos");
-    if (video.duration && video.duration > 60)
-      throw new Error("Video must be 60 seconds or less");
+    if (!video.thumbnail)
+      throw new Error("Video asset is missing a thumbnail.");
 
     try {
-      setUploading(true);
+      const fileId = uuidv4();
+      const fileName = `${user.id}_${fileId}`;
+      const fileExtension = video.uri.split(".").pop()?.toLowerCase() ?? "mp4";
 
-      const fileName = `${uuidv4()}.mp4`;
-      const filePath = `${spotId}/${fileName}`;
-      const thumbnailPath = `${spotId}/${fileName}-thumb.jpg`;
+      const videoPath = `spots/${spotId}/videos/originals/${fileName}.${fileExtension}`;
+      const thumbnailPath = `spots/${spotId}/videos/thumbnails/${fileName}.jpg`;
 
-      // Generate and upload thumbnail
-      const thumbnail = await generateThumbnail(video.uri);
-      if (!thumbnail) throw new Error("Failed to generate video thumbnail");
-
-      // Create form data for thumbnail upload
+      // --- Upload Thumbnail (uses FormData, which is fine for images) ---
+      onProgress?.(10);
       const thumbnailFormData = new FormData();
       thumbnailFormData.append("file", {
-        uri: `data:image/jpeg;base64,${thumbnail}`,
-        name: `${fileName}-thumb.jpg`,
+        uri: video.thumbnail,
+        name: `${fileName}.jpg`,
         type: "image/jpeg",
       } as any);
 
-      // Upload thumbnail using performStorageUpload
       const thumbnailUrl = await performStorageUpload(
         "spot-media",
-        `thumbnails/${thumbnailPath}`,
+        thumbnailPath,
         thumbnailFormData
       );
+      onProgress?.(30);
 
-      // Create form data for video upload
-      const videoFormData = new FormData();
+      // --- Upload Video (uses blob directly) ---
+      console.log(`[uploadVideo] Uploading processed video: ${video.uri}`);
+      const videoInfo = await FileSystem.getInfoAsync(video.uri, {
+        size: true,
+      });
+      if (!videoInfo.exists || videoInfo.size === 0) {
+        throw new Error("The final video file to upload is invalid or empty.");
+      }
+
       const response = await fetch(video.uri);
       const blob = await response.blob();
-      videoFormData.append("file", blob as any);
+      if (blob.size === 0) {
+        throw new Error("Cannot upload an empty video blob.");
+      }
 
-      // Upload video using performStorageUpload
+      const contentType = `video/${
+        fileExtension === "mov" ? "quicktime" : fileExtension
+      }`;
+
+      // Pass blob directly to performStorageUpload
       const videoUrl = await performStorageUpload(
         "spot-media",
-        `videos/${filePath}`,
-        videoFormData
+        videoPath,
+        blob, // Pass blob instead of FormData
+        contentType // Pass contentType
       );
+      onProgress?.(90);
 
-      // Save to spot_videos table with new fields
+      // --- Save Record to Database ---
       const { error: dbError } = await supabase.from("spot_videos").insert({
-        spotId: spotId,
-        userId: user.id,
+        spot_id: spotId,
+        user_id: user.id,
         url: videoUrl,
-        thumbnailUrl: thumbnailUrl,
+        thumbnail_url: thumbnailUrl,
         duration: Math.round(video.duration ?? 0),
+        file_size: video.fileSize,
         width: video.width,
         height: video.height,
-        createdAt: new Date().toISOString(),
+        created_at: new Date().toISOString(),
       });
 
       if (dbError) throw dbError;
+      onProgress?.(100);
 
       return {
         url: videoUrl,
@@ -99,90 +109,131 @@ export const useSpotVideos = () => {
         created_at: new Date().toISOString(),
       };
     } catch (error) {
-      console.error("Error uploading video:", error);
+      console.error("[uploadVideo] Error:", error);
       throw error;
-    } finally {
-      setUploading(false);
     }
   };
 
-  // Perform the storage upload with retry logic
+  const uploadVideos = async (
+    videos: VideoAsset[],
+    spotId: string,
+    concurrentUploads: number = 2
+  ): Promise<VideoUploadResult[]> => {
+    if (!videos.length) return [];
+
+    try {
+      setUploading(true);
+      const results: VideoUploadResult[] = [];
+      const chunks = [];
+
+      for (let i = 0; i < videos.length; i += concurrentUploads) {
+        chunks.push(videos.slice(i, i + concurrentUploads));
+      }
+
+      for (const chunk of chunks) {
+        const chunkPromises = chunk.map((video) => {
+          const videoId = video.uri;
+          return uploadVideo(video, spotId, (progress) => {
+            setUploadProgress((prev) => ({
+              ...prev,
+              [videoId]: progress,
+            }));
+          });
+        });
+
+        const chunkResults = await Promise.all(chunkPromises);
+        results.push(...chunkResults);
+      }
+
+      return results;
+    } catch (error) {
+      console.error("Error in batch video upload:", error);
+      throw error;
+    } finally {
+      setUploading(false);
+      setUploadProgress({});
+    }
+  };
+
+  // Refactored to handle either FormData or a Blob
   const performStorageUpload = async (
     bucketName: string,
     filePath: string,
-    formData: FormData,
+    body: FormData | Blob,
+    contentType?: string, // Make contentType optional
     maxRetries = 3
   ): Promise<string> => {
     const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? "";
-
-    // Get the current session directly from Supabase
     const { data } = await supabase.auth.getSession();
     const accessToken = data.session?.access_token;
 
     if (!accessToken) {
-      console.error("No valid session found - upload will likely fail");
+      throw new Error("No valid session found - upload will fail");
     }
 
-    let retryCount = 0;
+    const headers: { [key: string]: string } = {
+      Authorization: `Bearer ${accessToken}`,
+      "x-upsert": "true",
+    };
 
-    while (retryCount < maxRetries) {
+    // If body is a Blob, set the Content-Type header
+    if (contentType && body instanceof Blob) {
+      headers["Content-Type"] = contentType;
+    }
+
+    for (let retryCount = 0; retryCount < maxRetries; retryCount++) {
       try {
         if (retryCount > 0) {
-          console.log(`Retry attempt ${retryCount}...`);
-          await new Promise((r) => setTimeout(r, 2000 * retryCount)); // Exponential backoff
+          console.log(
+            `Retrying upload for ${filePath}, attempt ${retryCount + 1}...`
+          );
+          await new Promise((r) => setTimeout(r, 2000 * retryCount));
         }
 
-        console.log("Using auth token for video upload");
         const uploadResponse = await fetch(
           `${supabaseUrl}/storage/v1/object/${bucketName}/${filePath}`,
           {
             method: "POST",
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-              "x-upsert": "true",
-            },
-            body: formData,
+            headers,
+            body,
           }
         );
 
         if (!uploadResponse.ok) {
           const errorText = await uploadResponse.text();
-          console.warn(
-            `Upload attempt ${retryCount + 1} failed: ${
-              uploadResponse.status
-            } - ${errorText}`
+          throw new Error(
+            `Upload failed: ${uploadResponse.status} - ${errorText}`
           );
-          retryCount++;
-          continue;
         }
 
-        // Get the public URL
         const { data: urlData } = supabase.storage
           .from(bucketName)
           .getPublicUrl(filePath);
 
         if (!urlData?.publicUrl) {
-          throw new Error(`Failed to get public URL`);
+          throw new Error(`Failed to get public URL for ${filePath}`);
         }
 
         return urlData.publicUrl;
       } catch (err) {
-        console.warn(`Error on attempt ${retryCount + 1}:`, err);
-        retryCount++;
-
-        if (retryCount >= maxRetries) {
-          throw new Error(`Failed after ${maxRetries} upload attempts`);
+        console.warn(
+          `Error on attempt ${retryCount + 1} for ${filePath}:`,
+          err
+        );
+        if (retryCount === maxRetries - 1) {
+          throw new Error(
+            `Failed after ${maxRetries} upload attempts for ${filePath}`
+          );
         }
       }
     }
-
-    // This should never be reached due to the throw above, but TypeScript needs it
-    throw new Error("Upload failed after all retries");
+    throw new Error("Upload failed after all retries.");
   };
 
   return {
-    uploadVideo,
+    uploadVideos,
     uploading,
     setUploading,
+    uploadProgress,
   };
 };
