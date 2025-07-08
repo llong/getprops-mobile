@@ -52,20 +52,7 @@
           "apiKey": "AIzaSyA7rHTvxuk1ef0xsI72C9lZOS47_dC71LU"
         }
       },
-      "jsEngine": "hermes",
-      "intentFilters": [
-        {
-          "action": "VIEW",
-          "data": [
-            {
-              "scheme": "getprops",
-              "host": "auth",
-              "pathPrefix": "/callback"
-            }
-          ],
-          "category": ["BROWSABLE", "DEFAULT"]
-        }
-      ]
+      "jsEngine": "hermes"
     },
     "web": {
       "favicon": "./assets/favicon.png"

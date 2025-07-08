@@ -7,6 +7,7 @@ import { Navigation } from "./navigation";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { theme } from "./theme";
+import { useAuth } from "./hooks/useAuth";
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -19,6 +20,7 @@ SplashScreen.setOptions({
 
 export default function App() {
   const [appIsReady, setAppIsReady] = useState(false);
+  useAuth(); // Initialize auth and deep linking
 
   useEffect(() => {
     async function prepare() {

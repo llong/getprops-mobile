@@ -3,7 +3,6 @@ import { authAtom, authStateAtom } from "@state/auth";
 import { supabase } from "@utils/supabase";
 import { useState, useEffect, useCallback } from "react";
 import { Linking, AppState, AppStateStatus } from "react-native";
-import * as QueryParams from "expo-auth-session/build/QueryParams";
 import Toast from "react-native-toast-message";
 import { generateUsername } from "@/utils/helpers";
 
@@ -38,6 +37,72 @@ export const useAuth = () => {
     };
   }, [checkAuthStatus]);
 
+  const handleAuthDeepLink = useCallback(
+    async (url: string) => {
+      const urlParts = url.split("#");
+      if (urlParts.length < 2) return;
+
+      const params = new URLSearchParams(urlParts[1]);
+      const accessToken = params.get("access_token");
+      const refreshToken = params.get("refresh_token");
+      const isVerified = url.includes("verified=true");
+
+      if (accessToken && refreshToken) {
+        const {
+          data: { session },
+          error,
+        } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+
+        if (error) {
+          console.error("Error setting session:", error);
+          return;
+        }
+
+        if (session?.user && isVerified) {
+          try {
+            // Check if profile exists before creating
+            const { data: profile } = await supabase
+              .from("profiles")
+              .select("id")
+              .eq("id", session.user.id)
+              .single();
+
+            if (!profile) {
+              const username = generateUsername(session.user.email ?? "");
+              const { error: profileError } = await supabase
+                .from("profiles")
+                .insert([
+                  {
+                    id: session.user.id,
+                    username,
+                    email: session.user.email,
+                  },
+                ]);
+
+              if (profileError) throw profileError;
+
+              Toast.show({
+                type: "success",
+                text1: "Welcome to getProps!",
+                text2:
+                  "Your account has been verified and created successfully.",
+                position: "top",
+                visibilityTime: 4000,
+              });
+            }
+          } catch (err) {
+            console.error("Error creating profile:", err);
+          }
+        }
+        await setAuthState();
+      }
+    },
+    [setAuthState]
+  );
+
   useEffect(() => {
     const initializeAuth = async () => {
       try {
@@ -59,59 +124,7 @@ export const useAuth = () => {
     };
 
     initializeAuth();
-  }, []);
-
-  const handleAuthDeepLink = useCallback(async (url: string) => {
-    if (!url.includes("auth/callback")) return;
-
-    const parsedURL = new URL(url);
-    const { params } = QueryParams.getQueryParams(parsedURL.search);
-    const access_token = params.access_token;
-    const refresh_token = params.refresh_token;
-
-    if (access_token && refresh_token) {
-      const {
-        data: { session },
-        error,
-      } = await supabase.auth.setSession({
-        access_token,
-        refresh_token,
-      });
-
-      if (error) {
-        console.error("Error setting session:", error);
-        return;
-      }
-
-      if (session?.user && url.includes("verified=true")) {
-        try {
-          // Create profile for newly verified user
-          const username = generateUsername(session.user.email ?? "");
-          const { error: profileError } = await supabase
-            .from("profiles")
-            .insert([
-              {
-                id: session.user.id,
-                username,
-                email: session.user.email,
-              },
-            ]);
-
-          if (profileError) throw profileError;
-
-          Toast.show({
-            type: "success",
-            text1: "Welcome to getProps!",
-            text2: "Your account has been verified and created successfully.",
-            position: "top",
-            visibilityTime: 4000,
-          });
-        } catch (err) {
-          console.error("Error creating profile:", err);
-        }
-      }
-    }
-  }, []);
+  }, [handleAuthDeepLink]);
 
   const signUp = async (
     email: string,
@@ -164,7 +177,6 @@ export const useAuth = () => {
         return;
       }
 
-      // Check if profile exists, if not create it
       if (data.user) {
         const { data: profile } = await supabase
           .from("profiles")
@@ -194,7 +206,7 @@ export const useAuth = () => {
         }
       }
 
-      setError(""); // Clear any previous errors
+      setError("");
       await setAuthState();
       Toast.show({
         type: "success",
@@ -237,19 +249,6 @@ export const useAuth = () => {
     }
   };
 
-  const initializeAuth = async () => {
-    try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (session) {
-        await setAuthState();
-      }
-    } catch (error) {
-      console.error("Error initializing auth:", error);
-    }
-  };
-
   return {
     user,
     loading,
@@ -258,6 +257,5 @@ export const useAuth = () => {
     signUp,
     signOut,
     signInWithGoogle,
-    initializeAuth,
   };
 };
