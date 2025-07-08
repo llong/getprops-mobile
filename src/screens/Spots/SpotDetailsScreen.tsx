@@ -7,7 +7,7 @@ import React, {
   useRef,
 } from "react";
 import { View, StyleSheet, ScrollView, Dimensions, Share } from "react-native";
-import { Divider, useTheme } from "@rneui/themed";
+import { Divider } from "@rneui/themed";
 import { useRoute, RouteProp, useNavigation } from "@react-navigation/native";
 import { RootStackParamList } from "@/types/navigation";
 import { useSpots } from "@hooks/useSpots";
@@ -60,7 +60,6 @@ interface UseSpotHookExtended {
 export const SpotDetailsScreen = memo(() => {
   const route = useRoute<SpotDetailsRouteProp>();
   const navigation = useNavigation();
-  const { theme } = useTheme();
 
   // Get spot ID from route params
   const spotId = route.params?.spotId;

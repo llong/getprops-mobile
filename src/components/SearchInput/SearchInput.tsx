@@ -16,7 +16,7 @@ import {
   GooglePlaceDetail,
   GooglePlacesAutocomplete,
 } from "react-native-google-places-autocomplete";
-import { GOOGLE_API_KEY } from "@env";
+import { EXPO_PUBLIC_GOOGLE_API_KEY } from "@env"; // Correct import name
 import * as Location from "expo-location";
 import debounce from "lodash/debounce";
 import { supabase } from "@/utils/supabase";
@@ -205,7 +205,7 @@ export const SearchInput = React.forwardRef<any, SearchInputProps>(
                   },
                 }}
                 query={{
-                  key: GOOGLE_API_KEY,
+                  key: EXPO_PUBLIC_GOOGLE_API_KEY,
                   language: "en",
                   types: "establishment|geocode",
                   location: userLocation
@@ -281,8 +281,6 @@ const styles = StyleSheet.create({
   container: {
     width: "100%",
     zIndex: 999,
-    flexGrow: 1,
-    flex: 1,
   },
   spotResultsContainer: {
     backgroundColor: "white",

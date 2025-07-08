@@ -60,7 +60,7 @@ export const SpotMap: React.FC<SpotMapProps> = memo(
       latitude: number;
       longitude: number;
     } | null>(null);
-    const mapRef = useRef<MapView>(null);
+    const mapRef = useRef<MapView>(null); // Restore explicit MapView type
 
     // Add a state to guard the initial search
     const [initialSearchDone, setInitialSearchDone] = useState(false);
@@ -341,7 +341,7 @@ export const SpotMap: React.FC<SpotMapProps> = memo(
         )}
         <MapView
           ref={mapRef}
-          provider={PROVIDER_GOOGLE}
+          provider={PROVIDER_GOOGLE} // Revert to always using Google Maps
           style={styles.map}
           region={region}
           initialRegion={DEFAULT_REGION}

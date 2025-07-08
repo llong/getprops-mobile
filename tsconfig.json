@@ -3,6 +3,8 @@
   "compilerOptions": {
     "strict": true,
     "baseUrl": ".",
+    "esModuleInterop": true,
+    "lib": ["ES2015", "DOM"],
     "paths": {
       "@/*": ["src/*"],
       "@env": ["node_modules/react-native-dotenv"],

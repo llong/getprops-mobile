@@ -16,8 +16,12 @@ import { SpotMap } from "@/components/Spots/SpotMap";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { ISpot } from "@/types/spot"; // Add this import
 
 type SpotViewMode = "list" | "map";
+
+// Define Separator Component outside
+const ListSeparator = () => <View style={styles.separator} />;
 
 export const SpotsScreen = React.memo(() => {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
@@ -93,7 +97,7 @@ export const SpotsScreen = React.memo(() => {
         {viewMode === "list" ? (
           <FlatList
             data={spots}
-            renderItem={({ item }) => (
+            renderItem={({ item }: { item: ISpot }) => (
               <SpotListItem
                 spot={item}
                 onPress={() =>
@@ -106,7 +110,7 @@ export const SpotsScreen = React.memo(() => {
             )}
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.listContent}
-            ItemSeparatorComponent={() => <View style={styles.separator} />}
+            ItemSeparatorComponent={ListSeparator}
           />
         ) : (
           <SpotMap
@@ -129,7 +133,7 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start", // Align items to the top
     justifyContent: "space-between",
     paddingHorizontal: 16,
     paddingVertical: 8,
@@ -153,7 +157,6 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: 10,
   },
-  // toggleContainer removed as it's unused
   content: {
     flex: 1,
     marginTop: 60, // Adjust based on header height

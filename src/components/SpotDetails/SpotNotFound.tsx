@@ -30,10 +30,10 @@ export const SpotNotFound = memo(
           Debug info:
         </Text>
         <Text style={{ fontFamily: "monospace", fontSize: 12 }}>
-          SpotID: {spotId || "undefined"}
+          SpotID: {spotId ?? "undefined"}
         </Text>
         <Text style={{ fontFamily: "monospace", fontSize: 12 }}>
-          Route params: {JSON.stringify(routeParams || {}, null, 2)}
+          Route params: {JSON.stringify(routeParams ?? {}, null, 2)}
         </Text>
         <Button
           title="Go Back"

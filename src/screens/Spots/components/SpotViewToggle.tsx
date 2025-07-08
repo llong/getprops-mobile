@@ -41,7 +41,6 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     gap: 16,
-    // flexGrow: 1, // Removed this line
   },
   button: {
     padding: 8,

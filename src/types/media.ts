@@ -2,23 +2,15 @@ export interface VideoAsset {
   uri: string;
   width: number;
   height: number;
-  duration?: number;
-  type?: string;
-  filename?: string;
+  duration: number;
+  filename: string;
+  mediaType: string;
+  creationTime: number;
+  modificationTime: number;
+  assetId: string;
+  fileSize: number;
+  localUri: string;
   thumbnail?: string;
-  thumbnailUri?: string;
-  creationTime?: number;
-  modificationTime?: number;
-  albumId?: string;
-  mediaType?: string;
-  mediaSubtypes?: string[];
-  id?: string;
-  playableDuration?: number;
-  assetId?: string;
-  fileSize?: number;
-  localUri?: string;
-  isNetworkAsset?: boolean;
-  exif?: Record<string, any>;
 }
 
 export interface SpotVideo {
@@ -27,4 +19,32 @@ export interface SpotVideo {
   thumbnailUrl: string;
   duration: number;
   createdAt: string;
+}
+
+export interface PhotoMetadata {
+  width: number;
+  height: number;
+  takenAt?: string;
+  location?: {
+    latitude: number;
+    longitude: number;
+  };
+}
+
+export interface SpotPhoto {
+  id: string;
+  spotId: string;
+  userId: string;
+  originalUrl: string;
+  thumbnailSmallUrl: string;
+  thumbnailLargeUrl: string;
+  metadata: PhotoMetadata;
+  createdAt: string;
+}
+
+export interface PhotoUploadResult {
+  originalUrl: string;
+  thumbnailSmallUrl: string;
+  thumbnailLargeUrl: string;
+  metadata: PhotoMetadata;
 }

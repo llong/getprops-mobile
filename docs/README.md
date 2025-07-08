@@ -24,7 +24,8 @@ docs/
     ├── goals.md        # High-level project goals
     ├── roadmap.md      # Project roadmap
     ├── status.md       # Current project status
-    └── decisions.md    # Product decisions log
+    ├── decisions.md    # Product decisions log
+    └── backlog.md      # Project backlog
 ```
 
 ## Documentation Types
@@ -67,6 +68,14 @@ Located in `project/status.md`:
 - Key metrics
 - Blockers
 - Recent achievements
+
+### 5. Project Backlog
+
+Located in `project/backlog.md`:
+
+- Categorized stories and tasks
+- Priorities and estimated efforts
+- Dependencies and notes
 
 ## Maintenance Guidelines
 

@@ -29,40 +29,39 @@ export enum DifficultyLevel {
 export interface Profile {
   id: string;
   username: string | null;
-  avatarUrl: string | null;
+  avatar_url: string | null;
   city: string | null;
   country: string | null;
-  riderType: RiderType | null;
+  rider_type: RiderType | null;
   bio: string | null;
-  instagramHandle: string | null;
-  spotsContributed: string[];
-  likedSpots: string[];
-  dislikedSpots: string[];
-  createdAt: string;
-  updatedAt: string;
+  instagram_handle: string | null;
+  spots_contributed: string[];
+  liked_spots: string[];
+  disliked_spots: string[];
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Spot {
   id: string;
   name: string;
   description: string | null;
-  spotType: SpotType[];
-  types: SpotType[];
+  spot_type: SpotType[];
   difficulty: DifficultyLevel;
-  isLit: boolean;
-  kickoutRisk: number;
+  is_lit: boolean;
+  kickout_risk: number;
   latitude: number;
   longitude: number;
   address: string | null;
   city: string | null;
   country: string | null;
   status: SpotStatus;
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
   upvotes: number;
   downvotes: number;
-  flagCount: number;
+  flag_count: number;
   photos: string[];
 }
 
@@ -78,24 +77,29 @@ export interface SpotMedia {
   updatedAt: string;
 }
 
-export interface SpotVideo extends SpotMedia {
-  type: "video";
+export interface SpotVideo {
+  id: string;
+  spot_id: string;
+  user_id: string;
+  url: string;
+  thumbnail_url: string;
   duration: number;
-  width: number;
-  height: number;
-  fileSize: number;
+  width: number | null;
+  height: number | null;
+  created_at: string;
 }
 
 export interface SpotPhoto {
   id: string;
-  mediaId: string;
-  spotId: string;
-  userId: string;
+  spot_id: string;
+  user_id: string;
   url: string;
-  thumbnailUrl: string | null;
+  thumbnail_url: string | null;
+  thumbnail_large_url: string | null;
+  thumbnail_small_url: string | null;
   width: number | null;
   height: number | null;
-  createdAt: string;
+  created_at: string;
 }
 
 export interface SpotFilters {

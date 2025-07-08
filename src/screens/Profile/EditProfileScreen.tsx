@@ -95,7 +95,7 @@ export const EditProfileScreen = () => {
     } catch (err: any) {
       console.error("Error selecting avatar:", err);
       setError(
-        typeof err === "string" ? err : err.message || "Failed to select image"
+        typeof err === "string" ? err : err.message ?? "Failed to select image"
       );
     }
   };

@@ -23,7 +23,4 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     detectSessionInUrl: false,
   },
-  db: {
-    schema: "public",
-  },
 });

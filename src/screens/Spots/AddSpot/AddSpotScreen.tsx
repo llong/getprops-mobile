@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, ScrollView } from "react-native";
+import { View, Text, StyleSheet, ScrollView, Alert } from "react-native"; // Import Alert
 import { useNavigation } from "@react-navigation/native";
 import { useAuth } from "@hooks/useAuth";
 import { Input, Button, useTheme } from "@rneui/themed";
@@ -13,7 +13,7 @@ import { VideoSelector } from "./components/VideoSelector";
 import { DifficultyLevel } from "@/types/database";
 import { useSpotForm } from "./hooks/useSpotForm";
 import * as ImagePicker from "expo-image-picker";
-import { VideoAsset } from "@/types/media";
+import { VideoAsset, PhotoUploadResult } from "@/types/media";
 import { useSpotPhotos } from "@hooks/useSpotPhotos";
 import { useSpotVideos } from "@hooks/useSpotVideos";
 import { supabase } from "@utils/supabase";
@@ -29,7 +29,7 @@ export const AddSpotScreen = ({ route }: AddSpotScreenProps) => {
   const navigation = useNavigation();
   const { user } = useAuth();
   const { uploadPhotos } = useSpotPhotos();
-  const { uploadVideo, setUploading: setVideoUploading } = useSpotVideos();
+  const { setUploading: setVideoUploading, uploadVideos } = useSpotVideos();
   const {
     formData,
     handleNameChange,
@@ -165,61 +165,123 @@ export const AddSpotScreen = ({ route }: AddSpotScreenProps) => {
       console.log(`Created new spot with ID: ${id}`);
 
       // Step 2: Upload media files using the real spot ID
-      await uploadSpotMedia(id);
-
-      // Success! Reset form by setting initial values
-      setFormData({
-        name: "",
-        description: null,
-        latitude: 0,
-        longitude: 0,
-        spotType: [],
-        kickoutRisk: 1,
-        difficulty: "beginner" as DifficultyLevel,
-        isLit: false,
-        streetNumber: null,
-        street: null,
-        city: null,
-        region: null,
-        country: null,
-        postalCode: null,
-      });
-      setPhotos([]);
-      setVideos([]);
-
-      Toast.show({
-        type: "success",
-        text1: "Success!",
-        text2: "Spot added successfully",
-      });
-
-      // Reset form state
-      setUploading(false);
-
-      // Navigate to spot details using the correct route names for your app
-      console.log("[AddSpotScreen] Created spot with ID:", id);
-      console.log(
-        "[AddSpotScreen] Spot data for navigation:",
-        JSON.stringify(spot, null, 2)
-      );
-
-      // Make sure we pass a complete spot object to navigation
-      const completeSpot = {
-        ...spot,
-        photos: [], // Will be loaded in SpotDetailsScreen
-        spotType: Array.isArray(spot.spotType)
-          ? spot.spotType
-          : [spot.spotType],
-      };
-
-      navigation.navigate("SpotDetails", { spotId: id, spot: completeSpot });
+      try {
+        await uploadSpotMedia(id);
+        // If successful, proceed to reset and navigate
+        resetFormAndNavigate(spot);
+      } catch (mediaUploadError: any) {
+        // This catch block specifically handles errors from uploadSpotVideos
+        console.error(
+          "Video upload failed during handleSubmit:",
+          mediaUploadError
+        );
+        setUploading(false); // Stop loading indicator
+        Alert.alert(
+          "Video Upload Failed",
+          `There was an issue uploading one or more videos: ${mediaUploadError.message}. What would you like to do?`,
+          [
+            {
+              text: "Cancel",
+              style: "cancel",
+              onPress: () => console.log("Spot creation cancelled by user."),
+            },
+            {
+              text: "Save without Videos",
+              onPress: () => {
+                setVideos([]); // Clear videos
+                // We need to re-trigger the final part of handleSubmit without videos
+                // This is a simplified approach; a more robust one might involve a separate function
+                console.log("Proceeding to save spot without videos.");
+                resetFormAndNavigate(spot);
+              },
+            },
+            {
+              text: "Retry Video Upload",
+              onPress: async () => {
+                setUploading(true); // Re-enable loading
+                setError(null);
+                try {
+                  await uploadSpotVideos(id); // Retry only video uploads
+                  console.log("Video retry successful.");
+                  resetFormAndNavigate(spot);
+                } catch (retryError: any) {
+                  setUploading(false);
+                  setError(`Video upload retry failed: ${retryError.message}`);
+                  Alert.alert(
+                    "Retry Failed",
+                    `Video upload still failed: ${retryError.message}`
+                  );
+                }
+              },
+            },
+          ]
+        );
+        return; // Stop further execution of handleSubmit if videos failed and user is prompted
+      }
     } catch (submitError) {
+      // This catches errors from createSpotRecord or other general errors
       console.error("Error creating spot:", submitError);
       const errorMessage =
         submitError instanceof Error ? submitError.message : "Unknown error";
       setError(`Error adding spot: ${errorMessage}`);
       setUploading(false);
     }
+  };
+
+  const resetFormAndNavigate = (spot: any) => {
+    // Success! Reset form by setting initial values
+    setFormData({
+      name: "",
+      description: null,
+      latitude: 0,
+      longitude: 0,
+      spotType: [],
+      kickoutRisk: 1,
+      difficulty: "beginner" as DifficultyLevel,
+      isLit: false,
+      streetNumber: null,
+      street: null,
+      city: null,
+      region: null,
+      country: null,
+      postalCode: null,
+    });
+    setPhotos([]);
+    setVideos([]);
+
+    Toast.show({
+      type: "success",
+      text1: "Success!",
+      text2: "Spot added successfully",
+    });
+
+    setPhotos([]);
+    setVideos([]);
+
+    Toast.show({
+      type: "success",
+      text1: "Success!",
+      text2: "Spot added successfully",
+    });
+
+    // Reset form state
+    setUploading(false);
+
+    // Navigate to spot details
+    console.log(
+      "[AddSpotScreen] Navigating with spot:",
+      JSON.stringify(spot, null, 2)
+    );
+    const completeSpot = {
+      ...spot,
+      photos: [], // Will be loaded in SpotDetailsScreen
+      spotType: Array.isArray(spot.spotType)
+        ? spot.spotType
+        : spot.spotType
+        ? [spot.spotType]
+        : [], // Ensure spotType is an array
+    };
+    navigation.navigate("SpotDetails", { spotId: spot.id, spot: completeSpot });
   };
 
   // Helper function for creating spot record
@@ -251,7 +313,6 @@ export const AddSpotScreen = ({ route }: AddSpotScreenProps) => {
             : null,
           city: formData.city ?? null,
           country: formData.country ?? null,
-          postal_code: formData.postalCode ?? null,
         },
       ])
       .select();
@@ -270,15 +331,21 @@ export const AddSpotScreen = ({ route }: AddSpotScreenProps) => {
 
   // Helper function for creating photo database records
   const createPhotoRecords = async (
-    uploadedPhotoUrls: string[],
+    uploadResults: PhotoUploadResult[],
     spotId: string
   ): Promise<void> => {
-    for (const photoUrl of uploadedPhotoUrls) {
+    for (const result of uploadResults) {
       try {
         const { error } = await supabase.from("spot_photos").insert({
           spot_id: spotId,
           user_id: user!.id,
-          url: photoUrl,
+          url: result.originalUrl,
+          thumbnail_small_url: result.thumbnailSmallUrl,
+          thumbnail_large_url: result.thumbnailLargeUrl,
+          width: result.metadata.width,
+          height: result.metadata.height,
+          taken_at: result.metadata.takenAt,
+          location: result.metadata.location,
           created_at: new Date().toISOString(),
         });
 
@@ -293,42 +360,28 @@ export const AddSpotScreen = ({ route }: AddSpotScreenProps) => {
   };
 
   // Helper function for uploading videos
-  const uploadSpotVideos = async (spotId: string): Promise<void> => {
-    if (videos.length === 0) return;
+  const uploadSpotVideos = async (spotId: string): Promise<boolean> => {
+    if (videos.length === 0) return true; // No videos to upload, success.
 
+    setVideoUploading(true);
     try {
-      setVideoUploading(true);
-      for (const video of videos) {
-        await uploadVideo(video, spotId);
-      }
+      await uploadVideos(videos, spotId);
+      setVideoUploading(false);
+      return true; // Videos uploaded successfully
     } catch (videoUploadError) {
       console.error("Error uploading videos:", videoUploadError);
-      const errorMessage =
-        videoUploadError instanceof Error
-          ? videoUploadError.message
-          : "Unknown video upload error";
-      setError(
-        `Warning: Some videos may not have uploaded properly: ${errorMessage}`
-      );
-    } finally {
       setVideoUploading(false);
+      // Instead of setting local error, throw it to be handled by handleSubmit
+      throw videoUploadError;
     }
   };
 
   // Helper function for uploading photos and videos
   const uploadSpotMedia = async (spotId: string): Promise<void> => {
-    // Upload photos first but defer database record creation
+    // Upload photos first
     try {
-      // Use the deferred upload approach (upload to storage but don't create DB records yet)
-      const uploadedPhotoUrls = await uploadPhotos(
-        photos,
-        spotId,
-        user!.id,
-        true
-      );
-
-      // Now create database records for each uploaded photo
-      await createPhotoRecords(uploadedPhotoUrls, spotId);
+      const uploadResults = await uploadPhotos(photos, spotId, user!.id, true);
+      await createPhotoRecords(uploadResults, spotId);
     } catch (photoUploadError) {
       console.error("Error uploading photos:", photoUploadError);
       const errorMessage =
@@ -338,10 +391,14 @@ export const AddSpotScreen = ({ route }: AddSpotScreenProps) => {
       setError(
         `Warning: Some photos may not have uploaded properly: ${errorMessage}`
       );
+      // Decide if you want to stop here or proceed with video upload attempt
+      // For now, we'll let it proceed and video upload can handle its own errors
     }
 
     // Upload videos if any
-    await uploadSpotVideos(spotId);
+    if (videos.length > 0) {
+      await uploadSpotVideos(spotId); // This will now throw if it fails, to be caught by handleSubmit
+    }
   };
 
   return (
