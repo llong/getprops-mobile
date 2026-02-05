@@ -15,9 +15,10 @@ interface MediaCarouselProps {
         type: 'photo' | 'video';
         thumbnailUrl?: string;
     }>;
+    isVisible?: boolean;
 }
 
-export const MediaCarousel = ({ media }: MediaCarouselProps) => {
+export const MediaCarousel = ({ media, isVisible = true }: MediaCarouselProps) => {
     const [activeIndex, setActiveIndex] = useState(0);
     const videoRef = useRef<Video>(null);
     const [status, setStatus] = useState<any>({});
@@ -47,9 +48,10 @@ export const MediaCarousel = ({ media }: MediaCarouselProps) => {
                     useNativeControls
                     resizeMode={ResizeMode.CONTAIN}
                     isLooping
+                    shouldPlay={isVisible && index === activeIndex}
                     onPlaybackStatusUpdate={status => setStatus(() => status)}
                 />
-                {!status.isPlaying && (
+                {(!status.isPlaying || !isVisible) && (
                     <View style={styles.playOverlay}>
                         <Icon name="play-arrow" size={50} color="#fff" />
                     </View>

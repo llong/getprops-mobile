@@ -15,6 +15,7 @@ export const FeedScreen = () => {
     const [filters, setFilters] = useAtom(feedFiltersAtom);
     const [index, setIndex] = useState(0);
     const [filterVisible, setFilterVisible] = useState(false);
+    const [visibleItems, setVisibleItems] = useState<string[]>([]);
 
     const {
         data,
@@ -39,9 +40,21 @@ export const FeedScreen = () => {
         }
     }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
+    const onViewableItemsChanged = useRef(({ viewableItems }: any) => {
+        setVisibleItems(viewableItems.map((item: any) => item.key));
+    }).current;
+
+    const viewabilityConfig = useRef({
+        itemVisiblePercentThreshold: 50
+    }).current;
+
     const renderItem = useCallback(({ item }: { item: any }) => (
-        <FeedItem item={item} currentUserId={user?.user.id} />
-    ), [user?.user.id]);
+        <FeedItem 
+            item={item} 
+            currentUserId={user?.user.id} 
+            isVisible={visibleItems.includes(`${item.media_id}-${item.created_at}`)}
+        />
+    ), [user?.user.id, visibleItems]);
 
     const keyExtractor = useCallback((item: any) => `${item.media_id}-${item.created_at}`, []);
 
@@ -109,6 +122,8 @@ export const FeedScreen = () => {
                     keyExtractor={keyExtractor}
                     onEndReached={handleLoadMore}
                     onEndReachedThreshold={0.5}
+                    onViewableItemsChanged={onViewableItemsChanged}
+                    viewabilityConfig={viewabilityConfig}
                     refreshControl={
                         <RefreshControl refreshing={isLoading} onRefresh={refetch} />
                     }

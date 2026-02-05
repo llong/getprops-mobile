@@ -6,14 +6,17 @@ import type { FeedItem as FeedItemType } from '@/types';
 import { useToggleMediaLike, useToggleFollow } from '@/hooks/useFeedQueries';
 import { useToggleFavoriteMutation } from '@/hooks/useSpotQueries';
 import { MediaCarousel } from './MediaCarousel';
+import { useNavigation } from '@react-navigation/native';
 
 interface FeedItemProps {
     item: FeedItemType;
     currentUserId?: string;
+    isVisible?: boolean;
 }
 
-export const FeedItem = memo(({ item, currentUserId }: FeedItemProps) => {
+export const FeedItem = memo(({ item, currentUserId, isVisible = true }: FeedItemProps) => {
     const { theme } = useTheme();
+    const navigation = useNavigation() as any;
     const toggleLikeMutation = useToggleMediaLike();
     const toggleFollowMutation = useToggleFollow();
     const toggleFavoriteMutation = useToggleFavoriteMutation();
@@ -84,11 +87,19 @@ export const FeedItem = memo(({ item, currentUserId }: FeedItemProps) => {
         }
     };
 
+    const handleProfilePress = () => {
+        navigation.navigate('ProfileStack', { screen: 'UserProfile', params: { userId: item.uploader_id } });
+    };
+
+    const handleSpotPress = () => {
+        navigation.navigate('SpotStack', { screen: 'SpotDetails', params: { spotId: item.spot_id } });
+    };
+
     return (
         <View style={styles.container}>
             {/* Header */}
             <View style={styles.header}>
-                <View style={styles.userInfo}>
+                <TouchableOpacity style={styles.userInfo} onPress={handleProfilePress}>
                     <Avatar
                         rounded
                         size={40}
@@ -101,7 +112,7 @@ export const FeedItem = memo(({ item, currentUserId }: FeedItemProps) => {
                         </View>
                         <Text style={styles.username}>@{item.uploader_username}</Text>
                     </View>
-                </View>
+                </TouchableOpacity>
                 {currentUserId && currentUserId !== item.uploader_id && (
                     <Button
                         title={item.is_followed_by_user ? "Following" : "Follow"}
@@ -122,7 +133,7 @@ export const FeedItem = memo(({ item, currentUserId }: FeedItemProps) => {
             </View>
 
             {/* Content */}
-            <View style={styles.content}>
+            <TouchableOpacity style={styles.content} onPress={handleSpotPress}>
                 <Text style={styles.spotText}>
                     Found a spot: <Text style={styles.spotName}>{item.spot_name}</Text>
                 </Text>
@@ -132,7 +143,7 @@ export const FeedItem = memo(({ item, currentUserId }: FeedItemProps) => {
                         <Text style={styles.locationText}>{item.city}, {item.country}</Text>
                     </View>
                 )}
-            </View>
+            </TouchableOpacity>
 
             {/* Media */}
             <MediaCarousel 
@@ -142,6 +153,7 @@ export const FeedItem = memo(({ item, currentUserId }: FeedItemProps) => {
                     type: item.media_type,
                     thumbnailUrl: item.thumbnail_url
                 }]} 
+                isVisible={isVisible}
             />
 
             {/* Actions */}

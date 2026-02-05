@@ -11,6 +11,9 @@ import { Divider } from "@rneui/themed";
 import { useRoute, RouteProp, useNavigation } from "@react-navigation/native";
 import { RootStackParamList } from "@/types/navigation";
 import { useSpots } from "@hooks/useSpots";
+import { useDeleteSpotMutation } from "@hooks/useSpotQueries";
+import { profileAtom } from "@state/auth";
+import { useAtomValue } from "jotai";
 import { LoadingSpinner } from "@/components/LoadingSpinner/LoadingSpinner";
 import {
   MediaCarousel,
@@ -59,7 +62,10 @@ interface UseSpotHookExtended {
 
 export const SpotDetailsScreen = memo(() => {
   const route = useRoute<SpotDetailsRouteProp>();
-  const navigation = useNavigation();
+  const navigation = useNavigation() as any;
+  const userProfile = useAtomValue(profileAtom);
+  const isAdmin = userProfile?.role === 'admin';
+  const deleteSpotMutation = useDeleteSpotMutation();
 
   // Get spot ID from route params
   const spotId = route.params?.spotId;
@@ -227,6 +233,39 @@ export const SpotDetailsScreen = memo(() => {
     navigation.goBack();
   }, [navigation]);
 
+  const handleDeleteSpot = useCallback(async () => {
+    if (!spotId) return;
+
+    Alert.alert(
+      "Delete Spot",
+      "Are you sure you want to delete this spot? This action cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Delete", 
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await deleteSpotMutation.mutateAsync(spotId);
+              Toast.show({
+                type: "success",
+                text1: "Spot deleted",
+              });
+              navigation.navigate("SpotsList");
+            } catch (error) {
+              console.error("Failed to delete spot:", error);
+              Toast.show({
+                type: "error",
+                text1: "Delete failed",
+                text2: (error as Error).message,
+              });
+            }
+          }
+        }
+      ]
+    );
+  }, [spotId, deleteSpotMutation, navigation]);
+
   // Main render method with simplified logic
   if (loading) {
     return (
@@ -286,6 +325,18 @@ export const SpotDetailsScreen = memo(() => {
         upvoteCount={spot.upvotes}
         downvoteCount={spot.downvotes}
       />
+
+      {isAdmin && (
+        <View style={styles.adminActions}>
+          <Button
+            title="Delete Spot (Admin)"
+            onPress={handleDeleteSpot}
+            buttonStyle={{ backgroundColor: theme.colors.error }}
+            containerStyle={styles.deleteButton}
+            loading={deleteSpotMutation.isPending}
+          />
+        </View>
+      )}
     </ScrollView>
   );
 });
@@ -300,5 +351,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     padding: 20,
+  },
+  adminActions: {
+    padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: "#eee",
+  },
+  deleteButton: {
+    borderRadius: 8,
   },
 });
