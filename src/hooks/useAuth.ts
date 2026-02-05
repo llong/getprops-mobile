@@ -1,5 +1,5 @@
-import { useAtom } from "jotai";
-import { authAtom, authStateAtom } from "@state/auth";
+import { useAtom, useSetAtom, useAtomValue } from "jotai";
+import { userAtom, authStateAtom, isLoggedInAtom } from "@state/auth";
 import { supabase } from "@utils/supabase";
 import { useState, useEffect, useCallback } from "react";
 import { Linking, AppState, AppStateStatus } from "react-native";
@@ -7,8 +7,10 @@ import Toast from "react-native-toast-message";
 import { generateUsername } from "@/utils/helpers";
 
 export const useAuth = () => {
-  const [user] = useAtom(authAtom);
-  const [, setAuthState] = useAtom(authStateAtom);
+  const auth = useAtomValue(userAtom);
+  const user = auth?.user || null;
+  const setAuthState = useSetAtom(authStateAtom);
+  const isAuthenticated = useAtomValue(isLoggedInAtom);
   const [loading, setLoading] = useState(true);
 
   const checkAuthStatus = useCallback(async () => {
@@ -251,8 +253,9 @@ export const useAuth = () => {
 
   return {
     user,
+    auth,
     loading,
-    isAuthenticated: !!user,
+    isAuthenticated,
     signIn,
     signUp,
     signOut,

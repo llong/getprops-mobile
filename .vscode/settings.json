@@ -1,5 +1,88 @@
 {
   "typescript.validate.ignore": [
     "**/node_modules/expo-location/**"
-  ]
+  ],
+  "java.configuration.updateBuildConfiguration": "automatic",
+  "java.import.exclusions": [
+    "**/node_modules/**",
+    "**/.pnpm/**"
+  ],
+  "java.errors.incompleteClasspath.severity": "ignore",
+  "java.project.resourceFilters": [
+    {
+      "type": "EXCLUDE_ALL",
+      "attributes": {
+        "pattern": "node_modules",
+        "recursive": "true"
+      }
+    },
+    {
+      "type": "EXCLUDE_ALL",
+      "attributes": {
+        "pattern": ".pnpm",
+        "recursive": "true"
+      }
+    },
+    {
+      "type": "EXCLUDE_ALL",
+      "attributes": {
+        "pattern": "node_modules/expo-modules-core",
+        "recursive": "true"
+      }
+    },
+    {
+      "type": "EXCLUDE_ALL",
+      "attributes": {
+        "pattern": "dist",
+        "recursive": "true"
+      }
+    },
+    {
+      "type": "EXCLUDE_ALL",
+      "attributes": {
+        "pattern": "build",
+        "recursive": "true"
+      }
+    },
+    {
+      "type": "EXCLUDE_ALL",
+      "attributes": {
+        "pattern": "out",
+        "recursive": "true"
+      }
+    },
+    {
+      "type": "EXCLUDE_ALL",
+      "attributes": {
+        "pattern": "target",
+        "recursive": "true"
+      }
+    },
+    {
+      "type": "EXCLUDE_ALL",
+      "attributes": {
+        "pattern": "bin",
+        "recursive": "true"
+      }
+    },
+    {
+      "type": "EXCLUDE_ALL",
+      "attributes": {
+        "pattern": ".gradle",
+        "recursive": "true"
+      }
+    }
+  ],
+  "gradle.projectDetection.ignore": [
+    "**/node_modules/**",
+    "**/.pnpm/**"
+  ],
+  "files.exclude": {
+    "**/.pnpm/**": true,
+    "**/node_modules/**": true
+  },
+  "search.exclude": {
+    "**/.pnpm/**": true,
+    "**/node_modules/**": true
+  }
 }

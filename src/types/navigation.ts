@@ -17,6 +17,7 @@ export type ProfileStackParamList = {
   ProfileMain: undefined;
   EditProfile: undefined;
   UserProfile: { userId: string };
+  UserList: { userId: string; type: 'followers' | 'following' };
 };
 
 export type AuthStackParamList = {
@@ -32,12 +33,16 @@ export type RootStackParamList = {
   EditProfile: undefined;
   Search: undefined;
   Spots: undefined;
+  ChatRoom: { conversationId: string };
+  Notifications: undefined;
 };
 
 export type RootTabParamList = {
+  FeedStack: undefined;
   SpotStack: undefined;
   ProfileStack: undefined;
-  AddSpot: undefined;
+  ChatStack: undefined;
+  Notifications: undefined;
 };
 
 export type RootStackNavigationProp = NavigationProp<RootTabParamList>;

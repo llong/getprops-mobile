@@ -50,7 +50,7 @@ type SearchResult = SpotResult | PlaceResult;
 
 const { width } = Dimensions.get("window");
 
-export const SearchInput = React.forwardRef<any, SearchInputProps>(
+const SearchInputComponent = React.forwardRef<any, SearchInputProps>(
   (
     {
       onSearch,
@@ -99,7 +99,7 @@ export const SearchInput = React.forwardRef<any, SearchInputProps>(
 
         if (error) throw error;
 
-        return data.map((spot) => ({
+        return data.map((spot: any) => ({
           ...spot,
           type: "spot" as const,
         }));
@@ -198,7 +198,9 @@ export const SearchInput = React.forwardRef<any, SearchInputProps>(
                 onPress={handleSelect}
                 keyboardShouldPersistTaps="always"
                 textInputProps={{
-                  onFocus: () => onFocus?.(),
+                  onFocus: () => {
+                    onFocus?.();
+                  },
                   clearButtonMode: "while-editing",
                   onChangeText: (text: string) => {
                     debouncedSpotSearch(text);
@@ -212,7 +214,6 @@ export const SearchInput = React.forwardRef<any, SearchInputProps>(
                     ? `${userLocation.lat},${userLocation.lng}`
                     : undefined,
                   radius: "50000",
-                  rankby: "distance",
                 }}
                 styles={{
                   container: {
@@ -276,6 +277,9 @@ export const SearchInput = React.forwardRef<any, SearchInputProps>(
     );
   }
 );
+
+const SearchModuleInput = React.memo(SearchInputComponent);
+export { SearchModuleInput as SearchInput };
 
 const styles = StyleSheet.create({
   container: {

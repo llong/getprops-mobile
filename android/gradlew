@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# Prepend node path for React Native builds
+export PATH="/Users/iztel/.nvm/versions/node/v25.2.1/bin:/usr/local/bin:$PATH"
+
 #
 # Copyright © 2015-2021 the original authors.
 #

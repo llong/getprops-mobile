@@ -7,7 +7,9 @@
     "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": false,
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "dev.getprops.app",
@@ -49,7 +51,7 @@
       ],
       "config": {
         "googleMaps": {
-          "apiKey": "AIzaSyA7rHTvxuk1ef0xsI72C9lZOS47_dC71LU"
+          "apiKey": "AIzaSyA4RiC3UlcdfU3MRNkp0kBirRmSE8V9vdE"
         }
       },
       "jsEngine": "hermes"

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { supabase } from "@utils/supabase";
-import { UserProfile } from "@/types/profile";
+import { UserProfile } from "@/types";
 import { useDebounce } from "./useDebounce";
 
 export const useSearch = () => {

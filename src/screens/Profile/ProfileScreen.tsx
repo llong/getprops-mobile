@@ -4,13 +4,16 @@ import { Text, Button, Avatar, Icon, useTheme } from "@rneui/themed";
 import { useNavigation } from "@react-navigation/native";
 import { ProfileInfo } from "./components/ProfileInfo";
 import { useAuth } from "@/hooks/useAuth";
-import { useProfile } from "@/hooks/useProfile";
+import { useProfileQuery, useSocialStatsQuery } from "@/hooks/useProfileQueries";
+import { TouchableOpacity } from "react-native";
 
 export const ProfileScreen = () => {
   const { theme } = useTheme();
-  const navigation = useNavigation();
+  const navigation = useNavigation() as any;
   const { user, signOut } = useAuth();
-  const { profile } = useProfile(user?.id);
+  
+  const { data: profile } = useProfileQuery(user?.id);
+  const { data: stats } = useSocialStatsQuery(user?.id);
 
   const handleEditProfile = () => {
     navigation.navigate("EditProfile");
@@ -86,28 +89,42 @@ export const ProfileScreen = () => {
       <View
         style={[styles.statsContainer, { backgroundColor: theme.colors.white }]}
       >
-        <View style={styles.statBox}>
+        <TouchableOpacity 
+          style={styles.statBox}
+          onPress={() => navigation.navigate("UserList", { userId: user?.id, type: 'followers' })}
+        >
           <Text style={[styles.statValue, { color: theme.colors.black }]}>
-            {profile?.spots_contributed || 0}
+            {stats?.followerCount || 0}
           </Text>
           <Text style={[styles.statLabel, { color: theme.colors.grey1 }]}>
-            Spots
+            Followers
           </Text>
-        </View>
+        </TouchableOpacity>
+        <View
+          style={[styles.statDivider, { backgroundColor: theme.colors.grey5 }]}
+        />
+        <TouchableOpacity 
+          style={styles.statBox}
+          onPress={() => navigation.navigate("UserList", { userId: user?.id, type: 'following' })}
+        >
+          <Text style={[styles.statValue, { color: theme.colors.black }]}>
+            {stats?.followingCount || 0}
+          </Text>
+          <Text style={[styles.statLabel, { color: theme.colors.grey1 }]}>
+            Following
+          </Text>
+        </TouchableOpacity>
         <View
           style={[styles.statDivider, { backgroundColor: theme.colors.grey5 }]}
         />
         <View style={styles.statBox}>
           <Text style={[styles.statValue, { color: theme.colors.black }]}>
-            {profile?.liked_spots || 0}
+            {stats?.favorites?.length || 0}
           </Text>
           <Text style={[styles.statLabel, { color: theme.colors.grey1 }]}>
-            Upvotes
+            Favorites
           </Text>
         </View>
-        <View
-          style={[styles.statDivider, { backgroundColor: theme.colors.grey5 }]}
-        />
       </View>
 
       {/* Profile Info Section */}

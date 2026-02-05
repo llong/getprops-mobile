@@ -2,7 +2,7 @@ import { useEffect, useCallback } from "react";
 import { useAtom } from "jotai";
 import { supabase } from "@/utils/supabase";
 import { useAuth } from "./useAuth";
-import { Spot, SpotFormData } from "@/types/database";
+import { Spot } from "@/types";
 import {
   cachedSpotsAtom,
   spotsAtom,

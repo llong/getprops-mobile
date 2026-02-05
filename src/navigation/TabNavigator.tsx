@@ -20,7 +20,7 @@ export const TabNavigator = () => {
         component={SpotsScreen}
         options={{
           headerShown: false,
-          tabBarIcon: ({ color, size }) => (
+          tabBarIcon: ({ color, size }: { color: string; size: number }) => (
             <FontAwesome name="map-marker" size={size} color={color} />
           ),
         }}
@@ -30,7 +30,7 @@ export const TabNavigator = () => {
         component={user ? ProfileScreen : AuthNavigator}
         options={{
           headerShown: false,
-          tabBarIcon: ({ color, size }) => (
+          tabBarIcon: ({ color, size }: { color: string; size: number }) => (
             <Icon name="user" type="font-awesome" size={size} color={color} />
           ),
         }}

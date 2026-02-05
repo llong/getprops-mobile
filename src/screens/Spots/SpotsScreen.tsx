@@ -58,15 +58,15 @@ export const SpotsScreen = React.memo(() => {
     [region, search, setRegion]
   );
 
-  const handleSearchFocus = () => {
+  const handleSearchFocus = useCallback(() => {
     setSearchResultsVisible(true);
     setMapInteractionDisabled(true);
-  };
+  }, []);
 
-  const handleSearchDismiss = () => {
+  const handleSearchDismiss = useCallback(() => {
     setSearchResultsVisible(false);
     setMapInteractionDisabled(false);
-  };
+  }, []);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>

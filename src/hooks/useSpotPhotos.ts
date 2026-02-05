@@ -4,17 +4,14 @@ import { v4 as uuidv4 } from "uuid";
 import { supabase } from "@/utils/supabase";
 import * as FileSystem from "expo-file-system";
 import Toast from "react-native-toast-message";
-import * as ImageManipulator from "expo-image-manipulator";
+import { mediaService } from "@/services/mediaService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Image } from "react-native";
-import type { PhotoMetadata, PhotoUploadResult } from "@/types/media";
+import type { PhotoMetadata, PhotoUploadResult } from "@/types";
 
 // Constants
 const TEMP_DIRECTORY = `${FileSystem.cacheDirectory}spotty-temp-media/`;
 const THUMBNAIL_CACHE_PREFIX = "@spot_thumbnails:";
 const CACHE_EXPIRY = 7 * 24 * 60 * 60 * 1000; // 7 days
-const MAX_IMAGE_DIMENSION = 1920; // Maximum width or height for original images
-const MAX_FILE_SIZE = 800 * 1024; // Target file size limit (800KB)
 
 export const useSpotPhotos = () => {
   const [uploading, setUploading] = useState(false);
@@ -48,143 +45,6 @@ export const useSpotPhotos = () => {
     return url;
   };
 
-  // Optimize image for upload (constrain dimensions and compress if needed)
-  const optimizeImage = async (uri: string): Promise<string> => {
-    try {
-      // Get image info
-      const fileInfo = await FileSystem.getInfoAsync(uri, { size: true });
-
-      if (!fileInfo.exists) {
-        throw new Error("File does not exist");
-      }
-
-      // Get image dimensions
-      const { width, height } = await new Promise<{
-        width: number;
-        height: number;
-      }>((resolve, reject) => {
-        Image.getSize(
-          uri,
-          (width: number, height: number) => resolve({ width, height }),
-          (error: Error) => reject(error)
-        );
-      });
-
-      // Determine if resizing is needed based on dimensions
-      let actions = [];
-      if (width > MAX_IMAGE_DIMENSION || height > MAX_IMAGE_DIMENSION) {
-        // Calculate new dimensions while maintaining aspect ratio
-        const aspectRatio = width / height;
-        let newWidth, newHeight;
-
-        if (width > height) {
-          newWidth = Math.min(width, MAX_IMAGE_DIMENSION);
-          newHeight = Math.round(newWidth / aspectRatio);
-        } else {
-          newHeight = Math.min(height, MAX_IMAGE_DIMENSION);
-          newWidth = Math.round(newHeight * aspectRatio);
-        }
-
-        actions.push({ resize: { width: newWidth, height: newHeight } });
-      }
-
-      // Start with lower compression and increase if needed
-      let compression = 0.9;
-      let optimizedUri = uri;
-      let currentSize =
-        (fileInfo as FileSystem.FileInfo & { size: number }).size || 0;
-
-      // If file size is already small enough and no resizing needed, return original
-      if (currentSize <= MAX_FILE_SIZE && actions.length === 0) {
-        return uri;
-      }
-
-      // Apply initial optimization with resize if needed
-      const initialResult = await ImageManipulator.manipulateAsync(
-        uri,
-        actions,
-        {
-          compress: compression,
-          format: ImageManipulator.SaveFormat.JPEG,
-        }
-      );
-
-      optimizedUri = initialResult.uri;
-
-      // Check size and compress further if needed
-      const optimizedInfo = await FileSystem.getInfoAsync(optimizedUri, {
-        size: true,
-      });
-      currentSize =
-        (optimizedInfo as FileSystem.FileInfo & { size: number }).size || 0;
-
-      // If still too large, apply increasing compression until reaching target size
-      if (currentSize > MAX_FILE_SIZE) {
-        let attempts = 0;
-        const maxAttempts = 3;
-
-        while (currentSize > MAX_FILE_SIZE && attempts < maxAttempts) {
-          // Reduce compression by 20% each time
-          compression -= 0.2;
-          if (compression < 0.5) compression = 0.5; // Don't go below 0.5
-
-          const recompressResult = await ImageManipulator.manipulateAsync(
-            optimizedUri,
-            [], // No resize needed at this point
-            {
-              compress: compression,
-              format: ImageManipulator.SaveFormat.JPEG,
-            }
-          );
-
-          optimizedUri = recompressResult.uri;
-          const recompressedInfo = await FileSystem.getInfoAsync(optimizedUri, {
-            size: true,
-          });
-          currentSize =
-            (recompressedInfo as FileSystem.FileInfo & { size: number }).size ||
-            0;
-          attempts++;
-        }
-      }
-
-      console.log(
-        `Optimized image from ${
-          (fileInfo as FileSystem.FileInfo & { size: number }).size
-        } to ${currentSize} bytes`
-      );
-      return optimizedUri;
-    } catch (e) {
-      console.warn("Error optimizing image:", e);
-      return uri; // Fall back to original if optimization fails
-    }
-  };
-
-  // Generate thumbnails with specified dimensions
-  const generateThumbnails = async (
-    uri: string
-  ): Promise<{ small: string; large: string }> => {
-    try {
-      const [smallThumb, largeThumb] = await Promise.all([
-        ImageManipulator.manipulateAsync(uri, [{ resize: { width: 240 } }], {
-          compress: 0.7,
-          format: ImageManipulator.SaveFormat.JPEG,
-        }),
-        ImageManipulator.manipulateAsync(uri, [{ resize: { width: 720 } }], {
-          compress: 0.7,
-          format: ImageManipulator.SaveFormat.JPEG,
-        }),
-      ]);
-
-      return {
-        small: smallThumb.uri,
-        large: largeThumb.uri,
-      };
-    } catch (e) {
-      console.warn("Error generating thumbnails:", e);
-      throw e;
-    }
-  };
 
   // Updated prepareFileInfo to include paths for thumbnails
   const prepareFileInfo = (
@@ -262,7 +122,7 @@ export const useSpotPhotos = () => {
     }
   };
 
-  // Main upload function updated for thumbnail generation
+  // Main upload function updated to use mediaService
   const uploadPhoto = async (
     photo: ImagePickerAsset,
     spotId: string,
@@ -273,75 +133,11 @@ export const useSpotPhotos = () => {
     try {
       console.log(`Starting upload for photo: ${photo.fileName ?? "unnamed"}`);
 
-      // Check if file exists
-      const fileInfo = await FileSystem.getInfoAsync(photo.uri);
-      if (!fileInfo.exists) {
-        throw new Error("File does not exist");
-      }
-
-      // Optimize the original image first
-      const optimizedUri = await optimizeImage(photo.uri);
-
-      // Generate thumbnails from the optimized image
-      const thumbnails = await generateThumbnails(optimizedUri);
-
-      // Prepare file information
-      const {
-        originalPath,
-        thumbnailSmallPath,
-        thumbnailLargePath: thumbnailLargePathInfo,
-        contentType,
-      } = prepareFileInfo(photo, spotId, userId);
-
-      // Upload original and thumbnails in parallel
-      const [originalUrl, thumbnailSmallUrl, thumbnailLargeUrl] =
-        await Promise.all([
-          performStorageUpload(
-            "spot-media",
-            originalPath,
-            createFormData(optimizedUri, originalPath, contentType)
-          ),
-          performStorageUpload(
-            "spot-media",
-            thumbnailSmallPath,
-            createFormData(thumbnails.small, thumbnailSmallPath, "image/jpeg")
-          ),
-          performStorageUpload(
-            "spot-media",
-            thumbnailLargePathInfo,
-            createFormData(
-              thumbnails.large,
-              thumbnailLargePathInfo,
-              "image/jpeg"
-            )
-          ),
-        ]);
-
-      // Extract metadata
-      const metadata: PhotoMetadata = {
-        width: photo.width,
-        height: photo.height,
-        takenAt: photo.exif?.DateTimeOriginal,
-        location:
-          photo.exif?.GPSLatitude && photo.exif?.GPSLongitude
-            ? {
-                latitude: photo.exif.GPSLatitude,
-                longitude: photo.exif.GPSLongitude,
-              }
-            : undefined,
-      };
-
-      const result: PhotoUploadResult = {
-        originalUrl,
-        thumbnailSmallUrl,
-        thumbnailLargeUrl,
-        metadata,
-      };
-
-      // Save to database unless deferred
-      if (!deferSaving) {
-        await savePhotoRecord(spotId, userId, result);
-      }
+      const result = await mediaService.uploadPhoto(
+        { uri: photo.uri, width: photo.width, height: photo.height },
+        spotId,
+        userId
+      );
 
       if (onProgress) {
         onProgress(100);
