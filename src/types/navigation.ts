@@ -37,6 +37,13 @@ export type RootStackParamList = {
   Notifications: undefined;
 };
 
+export type ChatStackParamList = {
+  ChatInbox: undefined;
+  ChatRoom: { conversationId: string; title?: string; fromNotification?: boolean };
+  CreateGroup: undefined;
+  ChatSettings: { conversationId: string; chatTitle: string };
+};
+
 export type RootTabParamList = {
   FeedStack: undefined;
   SpotStack: undefined;
@@ -52,7 +59,8 @@ declare global {
     interface RootParamList
       extends SpotsStackParamList,
         ProfileStackParamList,
-        AuthStackParamList {}
+        AuthStackParamList,
+        ChatStackParamList {}
   }
 }
 

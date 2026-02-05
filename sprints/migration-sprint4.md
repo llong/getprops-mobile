@@ -22,20 +22,20 @@ This sprint implements the direct messaging features, allowing users to communic
     - [x] `MessageBubble` component (Me vs Others style).
     - [x] `ChatInput` with send button.
     - [x] Header: Show user/group name + avatar.
-    - [ ] Info button to open settings.
+    - [x] Info button to open settings.
 
 ### 3. Group Creation
-- [ ] Create `src/screens/Chat/CreateGroupScreen.tsx`.
-    - [ ] Input for Group Name.
-    - [ ] User search/select list (multi-select).
-    - [ ] Submit button -> `chatService.createGroup`.
+- [x] Create `src/screens/Chat/CreateGroupScreen.tsx`.
+    - [x] Input for Group Name.
+    - [x] User search/select list (multi-select).
+    - [x] Submit button -> `chatService.createGroup`.
 
 ### 4. Chat Settings
-- [ ] Create `src/screens/Chat/ChatSettingsScreen.tsx`.
-    - [ ] List members (Avatar + Name).
-    - [ ] (Admin) Rename group.
-    - [ ] (Admin) Remove members.
-    - [ ] "Leave Chat" button.
+- [x] Create `src/screens/Chat/ChatSettingsScreen.tsx`.
+    - [x] List members (Avatar + Name).
+    - [x] (Admin) Rename group.
+    - [x] (Admin) Remove members.
+    - [x] "Leave Chat" button.
 
 ## Success Criteria
 - [x] Real-time message updates (using `postgres_changes` subscription in hook).

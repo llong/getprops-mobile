@@ -6,6 +6,7 @@ import { useAtomValue } from 'jotai';
 import { userAtom } from '@/state/auth';
 import { format } from 'date-fns';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StackActions } from '@react-navigation/native';
 
 interface Props {
     route: any;
@@ -82,8 +83,39 @@ export const ChatRoomScreen = ({ route, navigation }: Props) => {
         );
     }
 
+    const chatTitle = route.params?.title || chat?.name || 'Chat';
+
+    const handleGoBack = () => {
+        // If coming from notifications, go to ChatInbox
+        if (route.params?.fromNotification) {
+            navigation.dispatch(StackActions.replace('ChatStack', { screen: 'ChatInbox' }));
+        } else {
+            navigation.goBack();
+        }
+    };
+
+    const handleOpenSettings = () => {
+        navigation.navigate('ChatStack', { screen: 'ChatSettings', params: { conversationId, chatTitle } });
+    };
+
     return (
         <SafeAreaView style={styles.container} edges={['bottom']}>
+            {/* Header */}
+            <View style={[styles.header, { backgroundColor: theme.colors.white, borderBottomColor: theme.colors.grey5 }]}>
+                <TouchableOpacity onPress={handleGoBack} style={styles.backButton}>
+                    <Icon name="arrow-back" />
+                </TouchableOpacity>
+                <Avatar
+                    rounded
+                    size={34}
+                    source={chat?.is_group ? require('@assets/images/icon.png') : (chat?.participants.find(p => p.user_id !== user?.user.id)?.profile?.avatarUrl ? { uri: chat.participants.find(p => p.user_id !== user?.user.id)?.profile?.avatarUrl } : require('@assets/images/icon.png'))}
+                />
+                <Text style={styles.chatTitle} numberOfLines={1}>{chatTitle}</Text>
+                <TouchableOpacity onPress={handleOpenSettings} style={styles.settingsButton}>
+                    <Icon name="info-outline" />
+                </TouchableOpacity>
+            </View>
+
             <FlatList
                 ref={flatListRef}
                 data={messages}
@@ -98,10 +130,11 @@ export const ChatRoomScreen = ({ route, navigation }: Props) => {
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
                 keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
             >
-                <View style={styles.inputContainer}>
+                <View style={[styles.inputContainer, { borderTopColor: theme.colors.grey5 }]}>
                     <TextInput
-                        style={styles.input}
+                        style={[styles.input, { backgroundColor: theme.colors.grey5 }]}
                         placeholder="Message..."
+                        placeholderTextColor={theme.colors.grey2}
                         value={content}
                         onChangeText={setContent}
                         multiline
@@ -122,6 +155,26 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#fff',
+    },
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 15,
+        paddingVertical: 10,
+        borderBottomWidth: 1,
+        zIndex: 1,
+    },
+    backButton: {
+        marginRight: 10,
+    },
+    chatTitle: {
+        flex: 1,
+        fontSize: 18,
+        fontWeight: '700',
+        marginLeft: 10,
+    },
+    settingsButton: {
+        marginLeft: 10,
     },
     loadingContainer: {
         flex: 1,
@@ -172,7 +225,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: 10,
         borderTopWidth: 1,
-        borderTopColor: '#eff3f4',
         backgroundColor: '#fff',
     },
     input: {

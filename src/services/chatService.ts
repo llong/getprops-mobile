@@ -297,6 +297,62 @@ export const chatService = {
       unreadCount: 0, // Not needed for detail view
     };
   },
+
+  /**
+   * Invites multiple users to an existing group chat.
+   */
+  async inviteUsersToGroup(conversationId: string, participantIds: string[]) {
+    const participants = participantIds.map((id) => ({
+      conversation_id: conversationId,
+      user_id: id,
+      role: "member",
+      status: "pending",
+    }));
+
+    const { error } = await supabase
+      .from("conversation_participants")
+      .insert(participants);
+
+    if (error) throw error;
+  },
+
+  /**
+   * Removes a participant from a group chat.
+   */
+  async removeParticipant(conversationId: string, userId: string) {
+    const { error } = await supabase
+      .from("conversation_participants")
+      .delete()
+      .eq("conversation_id", conversationId)
+      .eq("user_id", userId);
+
+    if (error) throw error;
+  },
+
+  /**
+   * Updates the name of a group chat.
+   */
+  async updateGroupName(conversationId: string, name: string) {
+    const { error } = await supabase
+      .from("conversations")
+      .update({ name, is_group: true })
+      .eq("id", conversationId);
+
+    if (error) throw error;
+  },
+
+  /**
+   * Leaves a group chat.
+   */
+  async leaveGroup(conversationId: string, userId: string) {
+    const { error } = await supabase
+      .from("conversation_participants")
+      .delete()
+      .eq("conversation_id", conversationId)
+      .eq("user_id", userId);
+
+    if (error) throw error;
+  },
 };
 
 export const blockService = {

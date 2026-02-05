@@ -2,8 +2,11 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ChatInboxScreen } from '@/screens/Chat/ChatInboxScreen';
 import { ChatRoomScreen } from '@/screens/Chat/ChatRoomScreen';
+import { CreateGroupScreen } from '@/screens/Chat/CreateGroupScreen';
+import { ChatSettingsScreen } from '@/screens/Chat/ChatSettingsScreen';
+import { ChatStackParamList } from '@/types/navigation';
 
-const Stack = createNativeStackNavigator();
+const Stack = createNativeStackNavigator<ChatStackParamList>();
 
 export const ChatNavigator = () => {
     return (
@@ -16,7 +19,17 @@ export const ChatNavigator = () => {
             <Stack.Screen 
                 name="ChatRoom" 
                 component={ChatRoomScreen} 
-                options={({ route }: any) => ({ title: route.params?.title || 'Chat' })} 
+                options={{ headerShown: false }} 
+            />
+            <Stack.Screen 
+                name="CreateGroup" 
+                component={CreateGroupScreen} 
+                options={{ headerShown: false }} 
+            />
+            <Stack.Screen 
+                name="ChatSettings" 
+                component={ChatSettingsScreen} 
+                options={{ headerShown: false }} 
             />
         </Stack.Navigator>
     );

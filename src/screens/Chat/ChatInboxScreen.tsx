@@ -131,7 +131,7 @@ export const ChatInboxScreen = () => {
 
             <TouchableOpacity 
                 style={[styles.fab, { backgroundColor: theme.colors.primary }]}
-                onPress={() => {/* Open Create Group Screen */}}
+                onPress={() => navigation.navigate('CreateGroup')}
             >
                 <Icon name="add" color="white" size={30} />
             </TouchableOpacity>
