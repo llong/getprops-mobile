@@ -15,10 +15,10 @@ This sprint focuses on the "community" aspect. We will build the screens and com
 - [x] Create `src/components/Comments/CommentBottomSheet.tsx`.
     - [x] List comments for a media item (`useMediaComments`).
     - [x] Render `CommentItem` (Avatar, Text, Time, Reply button).
-    - [ ] Handle nested replies (indentation).
-- [ ] Create `CommentInput` component.
-    - [ ] Text input with "Post" button.
-    - [ ] Handle "Replying to @user" state.
+    - [x] Handle nested replies (indentation).
+- [x] Create `CommentInput` component.
+    - [x] Text input with "Post" button.
+    - [x] Handle "Replying to @user" state.
 
 ### 2. User Lists (Followers/Following)
 - [x] Create `src/screens/Profile/UserListScreen.tsx`.
@@ -29,15 +29,15 @@ This sprint focuses on the "community" aspect. We will build the screens and com
 ### 3. Profile Updates
 - [x] Update `src/screens/Profile/ProfileScreen.tsx`.
     - [x] Display "Followers" and "Following" counts (clickable).
-    - [ ] Add "Follow" button (if not own profile).
-    - [ ] Show "Message" button.
+    - [x] Add "Follow" button (if not own profile).
+    - [x] Show "Message" button.
 
 ### 4. Notifications
 - [x] Create `src/screens/Notifications/NotificationsScreen.tsx`.
     - [x] Use `useNotificationsQuery`.
     - [x] Render `NotificationItem` based on type (like, comment, follow).
-    - [ ] Mark as read on tap.
-    - [ ] Navigate to relevant screen (Spot, Profile).
+    - [x] Mark as read on tap.
+    - [x] Navigate to relevant screen (Spot, Profile).
 
 ## Success Criteria
 - [x] Users can post and reply to comments.

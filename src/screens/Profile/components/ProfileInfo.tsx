@@ -1,7 +1,7 @@
 import React from "react";
 import { View, StyleSheet, Linking } from "react-native";
 import { Text, Icon } from "@rneui/themed";
-import { UserProfile } from "@/types/profile";
+import { UserProfile } from "@/types";
 
 interface ProfileInfoProps {
   profile: UserProfile | null;
@@ -9,8 +9,8 @@ interface ProfileInfoProps {
 
 export const ProfileInfo = ({ profile }: ProfileInfoProps) => {
   const handleInstagramPress = () => {
-    if (profile?.instagram_handle) {
-      Linking.openURL(`https://instagram.com/${profile.instagram_handle}`);
+    if (profile?.instagramHandle) {
+      Linking.openURL(`https://instagram.com/${profile.instagramHandle}`);
     }
   };
 
@@ -22,7 +22,7 @@ export const ProfileInfo = ({ profile }: ProfileInfoProps) => {
         </View>
       )}
 
-      {profile?.instagram_handle && (
+      {profile?.instagramHandle && (
         <View style={styles.socialLink}>
           <Icon
             name="instagram"
@@ -32,7 +32,7 @@ export const ProfileInfo = ({ profile }: ProfileInfoProps) => {
             onPress={handleInstagramPress}
           />
           <Text style={styles.instagramHandle} onPress={handleInstagramPress}>
-            @{profile.instagram_handle}
+            @{profile.instagramHandle}
           </Text>
         </View>
       )}

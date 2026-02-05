@@ -254,11 +254,14 @@ export const feedService = {
     if (error) throw error;
 
     // Aggregate reactions for each comment
-    return (data || []).map((comment: any) => {
+    const formattedComments = (data || []).map((comment: any) => {
       const reactions = comment.media_comment_reactions || [];
       const likes = reactions.filter(
         (r: any) => r.reaction_type === "like"
       ).length;
+      const dislikes = reactions.filter(
+        (r: any) => r.reaction_type === "dislike"
+      ).length; // Fetch dislikes
       const userReaction = userId
         ? reactions.find((r: any) => r.user_id === userId)?.reaction_type ||
           null
@@ -268,10 +271,37 @@ export const feedService = {
         ...comment,
         reactions: {
           likes,
+          dislikes, // Include dislikes
           userReaction,
         },
       };
-    }) as MediaComment[];
+    });
+
+    // Build threading - group replies under their parents
+    const commentMap = new Map<string, MediaComment>();
+    const rootComments: MediaComment[] = [];
+
+    formattedComments.forEach((c: MediaComment) => {
+      c.replies = []; // Initialize replies array
+      commentMap.set(c.id, c);
+    });
+
+    formattedComments.forEach((c: MediaComment) => {
+      if (c.parent_id && commentMap.has(c.parent_id)) {
+        // Ensure replies array exists before pushing
+        if (!commentMap.get(c.parent_id)!.replies) {
+          commentMap.get(c.parent_id)!.replies = [];
+        }
+        commentMap.get(c.parent_id)!.replies!.push(c);
+      } else {
+        rootComments.push(c);
+      }
+    });
+
+    return rootComments.sort(
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
   },
 
   /**

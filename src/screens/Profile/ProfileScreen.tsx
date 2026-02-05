@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { View, StyleSheet, ScrollView } from "react-native";
 import { Text, Button, Avatar, Icon, useTheme } from "@rneui/themed";
 import { useNavigation } from "@react-navigation/native";
@@ -6,14 +6,92 @@ import { ProfileInfo } from "./components/ProfileInfo";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfileQuery, useSocialStatsQuery } from "@/hooks/useProfileQueries";
 import { TouchableOpacity } from "react-native";
+import { useToggleFollow } from "@/hooks/useFeedQueries";
+import { chatService } from "@/services/chatService";
+import Toast from "react-native-toast-message";
+import { supabase } from "@/utils/supabase";
+import type { UserProfile } from "@/types";
 
 export const ProfileScreen = () => {
   const { theme } = useTheme();
   const navigation = useNavigation() as any;
   const { user, signOut } = useAuth();
-  
+
   const { data: profile } = useProfileQuery(user?.id);
   const { data: stats } = useSocialStatsQuery(user?.id);
+  const toggleFollowMutation = useToggleFollow();
+
+  const [isFollowing, setIsFollowing] = useState(false);
+
+  useEffect(() => {
+    const checkIfFollowing = async () => {
+      if (user?.id && profile?.id && user.id !== profile.id) {
+        const { data } = await supabase
+          .from('user_follows')
+          .select('*')
+          .eq('follower_id', user.id)
+          .eq('following_id', profile.id)
+          .maybeSingle();
+        setIsFollowing(!!data);
+      } else {
+        setIsFollowing(false);
+      }
+    };
+    checkIfFollowing();
+  }, [user?.id, profile?.id]);
+
+
+  const handleToggleFollow = async () => {
+    if (!user?.id || !profile?.id || user.id === profile.id) return;
+
+    try {
+      await toggleFollowMutation.mutateAsync(profile.id);
+      setIsFollowing(prev => !prev); // Optimistic update
+      Toast.show({
+        type: 'success',
+        text1: isFollowing ? `Unfollowed @${profile.username}` : `Following @${profile.username}`,
+        position: 'top',
+      });
+    } catch (error) {
+      console.error('Failed to toggle follow', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Follow action failed',
+        position: 'top',
+      });
+    }
+  };
+
+  const handleMessageUser = async () => {
+    if (!user?.id || !profile?.id) {
+      Toast.show({
+        type: 'error',
+        text1: 'Authentication required to message',
+        position: 'top',
+      });
+      return;
+    }
+    if (user.id === profile.id) {
+      Toast.show({
+        type: 'info',
+        text1: 'You cannot message yourself',
+        position: 'top',
+      });
+      return;
+    }
+
+    try {
+      const chatId = await chatService.getOrCreate1on1(user.id, profile.id);
+      navigation.navigate("ChatStack", { screen: "ChatRoom", params: { conversationId: chatId, title: profile.displayName || profile.username } });
+    } catch (error) {
+      console.error('Failed to start chat', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Failed to start chat',
+        position: 'top',
+      });
+    }
+  };
 
   const handleEditProfile = () => {
     navigation.navigate("EditProfile");
@@ -40,7 +118,7 @@ export const ProfileScreen = () => {
             size={100}
             rounded
             source={
-              profile?.avatar_url ? { uri: profile.avatar_url } : undefined
+              profile?.avatarUrl ? { uri: profile.avatarUrl } : undefined
             }
             icon={{
               name: "account-circle",
@@ -75,21 +153,48 @@ export const ProfileScreen = () => {
           )}
         </View>
 
-        <Button
-          title="Edit Profile"
-          type="outline"
-          onPress={handleEditProfile}
-          containerStyle={styles.editButton}
-          buttonStyle={{ borderColor: theme.colors.primary }}
-          titleStyle={{ color: theme.colors.primary }}
-        />
+        {user?.id === profile?.id ? (
+          <Button
+            title="Edit Profile"
+            type="outline"
+            onPress={handleEditProfile}
+            containerStyle={styles.editButton}
+            buttonStyle={{ borderColor: theme.colors.primary }}
+            titleStyle={{ color: theme.colors.primary }}
+          />
+        ) : (
+          <View style={styles.profileActions}>
+            <Button
+              title={isFollowing ? "Following" : "Follow"}
+              type={isFollowing ? "outline" : "solid"}
+              size="sm"
+              buttonStyle={[
+                styles.followButton,
+                !isFollowing && { backgroundColor: '#000' }
+              ]}
+              titleStyle={[
+                styles.followTitle,
+                isFollowing ? { color: '#000' } : { color: '#fff' }
+              ]}
+              onPress={handleToggleFollow}
+              loading={toggleFollowMutation.isPending}
+            />
+            <Button
+              title="Message"
+              type="outline"
+              size="sm"
+              onPress={handleMessageUser}
+              containerStyle={styles.messageButton}
+            />
+          </View>
+        )}
       </View>
 
       {/* Stats Section */}
       <View
         style={[styles.statsContainer, { backgroundColor: theme.colors.white }]}
       >
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.statBox}
           onPress={() => navigation.navigate("UserList", { userId: user?.id, type: 'followers' })}
         >
@@ -103,7 +208,7 @@ export const ProfileScreen = () => {
         <View
           style={[styles.statDivider, { backgroundColor: theme.colors.grey5 }]}
         />
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.statBox}
           onPress={() => navigation.navigate("UserList", { userId: user?.id, type: 'following' })}
         >
@@ -131,7 +236,7 @@ export const ProfileScreen = () => {
       <View
         style={[styles.infoContainer, { backgroundColor: theme.colors.white }]}
       >
-        <ProfileInfo profile={profile} />
+        <ProfileInfo profile={profile as UserProfile | null} />
       </View>
 
       {/* Action Buttons */}
@@ -192,6 +297,30 @@ const styles = StyleSheet.create({
   editButton: {
     paddingHorizontal: 20,
     marginBottom: 16,
+  },
+  profileActions: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    width: "100%",
+    paddingHorizontal: 20,
+    marginBottom: 16,
+    gap: 10, // Add spacing between buttons
+  },
+  followButton: {
+    flex: 1,
+    borderRadius: 20,
+    height: 40,
+    borderColor: '#cfd9de',
+  },
+  followTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  messageButton: {
+    flex: 1,
+    borderRadius: 20,
+    height: 40,
+    borderColor: '#cfd9de',
   },
   statsContainer: {
     flexDirection: "row",

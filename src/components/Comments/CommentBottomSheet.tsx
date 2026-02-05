@@ -2,9 +2,10 @@ import React, { useState, useCallback } from 'react';
 import { StyleSheet, View, FlatList, ActivityIndicator, KeyboardAvoidingView, Platform, TextInput } from 'react-native';
 import { Text, Avatar, Icon, useTheme, Button } from '@rneui/themed';
 import { BottomSheet } from '@rneui/base';
-import { useMediaComments, usePostMediaComment } from '@/hooks/useFeedQueries';
+import { useMediaComments, usePostMediaComment, useToggleCommentReaction } from '@/hooks/useFeedQueries';
 import { formatDistanceToNow } from 'date-fns';
 import type { MediaComment } from '@/types';
+import { TouchableOpacity } from 'react-native';
 
 interface CommentBottomSheetProps {
     isVisible: boolean;
@@ -20,26 +21,47 @@ export const CommentBottomSheet = ({ isVisible, onClose, mediaId, mediaType, use
     const { data: comments, isLoading } = useMediaComments(mediaId, mediaType, userId);
     const postCommentMutation = usePostMediaComment();
 
-    const handlePost = async () => {
+    const handlePost = async (parentId?: string) => {
         if (!newComment.trim() || !userId) return;
 
         try {
             await postCommentMutation.mutateAsync({
                 mediaId,
                 mediaType,
-                content: newComment.trim()
+                content: newComment.trim(),
+                parentId: parentId || null
             });
             setNewComment('');
+            setReplyingTo(null); // Clear replying state
         } catch (error) {
             console.error('Post comment failed', error);
         }
     };
 
-    const renderItem = ({ item }: { item: MediaComment }) => (
-        <View style={styles.commentItem}>
+    const toggleReactionMutation = useToggleCommentReaction();
+
+    const handleToggleReaction = useCallback(async (commentId: string, currentReaction: 'like' | null) => {
+        if (!userId) return;
+
+        try {
+            await toggleReactionMutation.mutateAsync({ commentId, reactionType: currentReaction === 'like' ? undefined : 'like' });
+        } catch (error) {
+            console.error('Toggle reaction failed', error);
+        }
+    }, [userId]);
+
+    const [replyingTo, setReplyingTo] = useState<MediaComment | null>(null);
+
+    const handleReplyPress = (comment: MediaComment) => {
+        setReplyingTo(comment);
+        setNewComment(`@${comment.author?.username || 'unknown'} `); // Pre-fill input
+    };
+
+    const renderCommentItem = ({ item, level = 0 }: { item: MediaComment, level?: number }) => (
+        <View style={[styles.commentItem, { marginLeft: level * 15 }]}>
             <Avatar
                 rounded
-                size={32}
+                size={level === 0 ? 36 : 28}
                 source={item.author?.avatarUrl ? { uri: item.author.avatarUrl } : require('@assets/images/icon.png')}
             />
             <View style={styles.commentContent}>
@@ -51,13 +73,24 @@ export const CommentBottomSheet = ({ isVisible, onClose, mediaId, mediaType, use
                 </View>
                 <Text style={styles.commentText}>{item.content}</Text>
                 <View style={styles.commentActions}>
-                    <Icon 
-                        name={item.reactions?.userReaction === 'like' ? "favorite" : "favorite-border"} 
-                        size={14} 
-                        color={item.reactions?.userReaction === 'like' ? theme.colors.error : theme.colors.grey3} 
-                    />
+                    <TouchableOpacity onPress={() => handleToggleReaction(item.id, item.reactions?.userReaction || null)}>
+                        <Icon 
+                            name={item.reactions?.userReaction === 'like' ? "favorite" : "favorite-border"} 
+                            size={14} 
+                            color={item.reactions?.userReaction === 'like' ? theme.colors.error : theme.colors.grey3} 
+                        />
+                    </TouchableOpacity>
                     <Text style={styles.likeCount}>{item.reactions?.likes || 0}</Text>
+                    <TouchableOpacity onPress={() => handleReplyPress(item)} style={styles.replyButton}>
+                        <Icon name="reply" size={14} color={theme.colors.grey3} />
+                    </TouchableOpacity>
                 </View>
+                {/* Render replies */}
+                {item.replies && item.replies.map(reply => (
+                    <View key={reply.id}>
+                        {renderCommentItem({ item: reply, level: level + 1 })}
+                    </View>
+                ))}
             </View>
         </View>
     );
@@ -82,7 +115,7 @@ export const CommentBottomSheet = ({ isVisible, onClose, mediaId, mediaType, use
                 ) : (
                     <FlatList
                         data={comments}
-                        renderItem={renderItem}
+                        renderItem={({ item }) => renderCommentItem({ item })}
                         keyExtractor={item => item.id}
                         contentContainerStyle={styles.listContent}
                         ListEmptyComponent={
@@ -92,6 +125,14 @@ export const CommentBottomSheet = ({ isVisible, onClose, mediaId, mediaType, use
                 )}
 
                 <View style={styles.inputContainer}>
+                    {replyingTo && (
+                        <View style={styles.replyingToBar}>
+                            <Text style={styles.replyingToText}>Replying to @{replyingTo.author?.username || 'unknown'}</Text>
+                            <TouchableOpacity onPress={() => setReplyingTo(null)}>
+                                <Icon name="close" size={16} color={theme.colors.grey1} />
+                            </TouchableOpacity>
+                        </View>
+                    )}
                     <TextInput
                         style={styles.input}
                         placeholder={userId ? "Add a comment..." : "Login to comment"}
@@ -103,7 +144,7 @@ export const CommentBottomSheet = ({ isVisible, onClose, mediaId, mediaType, use
                     <Button
                         type="clear"
                         disabled={!newComment.trim() || !userId || postCommentMutation.isPending}
-                        onPress={handlePost}
+                        onPress={() => handlePost(replyingTo?.id)}
                         icon={<Icon name="send" color={theme.colors.primary} />}
                     />
                 </View>
@@ -112,7 +153,6 @@ export const CommentBottomSheet = ({ isVisible, onClose, mediaId, mediaType, use
     );
 };
 
-import { TouchableOpacity } from 'react-native';
 
 const styles = StyleSheet.create({
     container: {
@@ -177,18 +217,34 @@ const styles = StyleSheet.create({
         color: '#536471',
         marginLeft: 4,
     },
+    replyButton: {
+        marginLeft: 10,
+    },
     emptyText: {
         textAlign: 'center',
         color: '#536471',
         marginTop: 40,
     },
     inputContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
+        flexDirection: 'column',
         padding: 10,
         borderTopWidth: 1,
         borderTopColor: '#eff3f4',
         backgroundColor: '#fff',
+    },
+    replyingToBar: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        backgroundColor: '#f0f2f5',
+        paddingVertical: 5,
+        paddingHorizontal: 10,
+        borderRadius: 10,
+        marginBottom: 5,
+    },
+    replyingToText: {
+        fontSize: 13,
+        color: '#536471',
     },
     input: {
         flex: 1,

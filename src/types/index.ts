@@ -213,8 +213,10 @@ export interface MediaComment {
     };
     reactions?: {
         likes: number;
-        userReaction: 'like' | null;
+        dislikes?: number; // Add dislikes for full parity
+        userReaction: 'like' | 'dislike' | null;
     };
+    replies?: MediaComment[]; // For nested replies
 }
 
 export interface LikedMediaItem {
